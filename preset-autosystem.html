@@ -1,0 +1,3335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preset AutoSystem</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Nunito:wght@400;600;700&display=swap');
+
+    :root {
+      --bg: #0a0e1a;
+      --bg2: #0f1525;
+      --bg3: #161d30;
+      --panel: #1a2235;
+      --panel2: #1f2840;
+      --border: #2a3a5c;
+      --border2: #334466;
+      --accent: #00d4ff;
+      --accent2: #0099cc;
+      --accent-glow: rgba(0, 212, 255, 0.15);
+      --green: #00e676;
+      --green-dim: #00a854;
+      --red: #ff4444;
+      --orange: #ff9800;
+      --yellow: #ffd600;
+      --text: #c8d8f0;
+      --text2: #7a9bc0;
+      --text3: #4a6080;
+      --white: #e8f4ff;
+
+      /* combustíveis */
+      --gasolina: #ff6b35;
+      --etanol: #00e676;
+      --diesel: #ffd600;
+      --gnv: #00d4ff;
+      --aditivada: #c471f5;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body.auth-locked {
+      overflow: hidden;
+    }
+
+    /* GRID BACKGROUND */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* LAYOUT */
+    .app-wrapper {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .app-wrapper.auth-hidden {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(90deg, var(--bg2) 0%, var(--panel) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 20px rgba(0, 212, 255, 0.08);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    .logo-text {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 1px;
+    }
+
+    .logo-sub {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-pill {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .user-pill.visible {
+      display: flex;
+    }
+
+    .user-pill strong {
+      color: var(--white);
+      font-size: 13px;
+    }
+
+    .btn-logout {
+      display: none;
+      padding: 8px 14px;
+      background: transparent;
+      border: 1px solid rgba(255, 68, 68, 0.35);
+      color: #ff8b8b;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+
+    .btn-logout.visible {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-logout:hover {
+      background: rgba(255, 68, 68, 0.1);
+      border-color: var(--red);
+    }
+
+    .conn-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .conn-status:hover {
+      border-color: var(--accent);
+    }
+
+    .conn-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text3);
+      transition: all 0.3s;
+    }
+
+    .conn-dot.connected {
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    .conn-dot.error {
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red);
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .btn-config {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-config:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      flex: 1;
+      padding: 28px 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* PAGE TITLE */
+    .page-header {
+      margin-bottom: 28px;
+    }
+
+    .page-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .page-subtitle {
+      color: var(--text2);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    .tab.active {
+      background: var(--panel);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* SECTIONS */
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    /* PRICE CHANGE SECTION */
+    .price-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* PRICE INPUTS PANEL */
+    .prices-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg3);
+    }
+
+    .fuel-group {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .fuel-group:last-child {
+      border-bottom: none;
+    }
+
+    .fuel-header {
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      user-select: none;
+    }
+
+    .fuel-header:hover {
+      background: var(--panel2);
+    }
+
+    .fuel-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .fuel-name {
+      font-weight: 700;
+      font-size: 14px;
+      flex: 1;
+      color: var(--white);
+    }
+
+    .fuel-bicos-count {
+      font-size: 12px;
+      color: var(--text3);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .fuel-chevron {
+      font-size: 12px;
+      color: var(--text3);
+      transition: transform 0.2s;
+    }
+
+    .fuel-chevron.open {
+      transform: rotate(90deg);
+    }
+
+    .fuel-prices {
+      padding: 0 20px 16px;
+      display: none;
+    }
+
+    .fuel-prices.open {
+      display: block;
+    }
+
+    .price-row {
+      margin-bottom: 10px;
+    }
+
+    .price-label {
+      font-size: 12px;
+      color: var(--text2);
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .price-input-wrap {
+      position: relative;
+    }
+
+    .price-input-wrap .currency {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text3);
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .price-input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--white);
+      padding: 10px 12px 10px 30px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    .price-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .price-input::placeholder {
+      color: var(--text3);
+      font-weight: 400;
+    }
+
+    .price-level-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .level-0 {
+      background: rgba(255, 150, 50, 0.15);
+      color: var(--orange);
+      border: 1px solid rgba(255, 150, 50, 0.3);
+    }
+
+    .level-1 {
+      background: rgba(0, 230, 118, 0.12);
+      color: var(--green);
+      border: 1px solid rgba(0, 230, 118, 0.25);
+    }
+
+    .level-2 {
+      background: rgba(0, 212, 255, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(0, 212, 255, 0.25);
+    }
+
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* SEND BUTTON */
+    .btn-send {
+      flex: 1 1 280px;
+      margin-top: 16px;
+      padding: 14px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      border: none;
+      border-radius: 10px;
+      color: #000;
+      font-size: 15px;
+      font-weight: 800;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 16px rgba(0, 212, 255, 0.25);
+    }
+
+    .btn-send:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(0, 212, 255, 0.35);
+    }
+
+    .btn-send:active {
+      transform: translateY(0);
+    }
+
+    .btn-send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-read {
+      flex: 1 1 240px;
+      margin-top: 16px;
+      padding: 14px;
+      background: transparent;
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-read:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .btn-read:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* BICOS GRID */
+    .bicos-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .bicos-grid {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .bico-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+    }
+
+    .bico-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: 10px 10px 0 0;
+    }
+
+    .bico-card.idle {
+      border-color: var(--border);
+    }
+
+    .bico-card.sending {
+      border-color: var(--accent);
+      box-shadow: 0 0 16px var(--accent-glow);
+      animation: bico-send 1s ease-in-out;
+    }
+
+    .bico-card.success {
+      border-color: var(--green);
+    }
+
+    .bico-card.error {
+      border-color: var(--red);
+    }
+
+    @keyframes bico-send {
+
+      0%,
+      100% {
+        box-shadow: 0 0 8px var(--accent-glow);
+      }
+
+      50% {
+        box-shadow: 0 0 24px rgba(0, 212, 255, 0.4);
+      }
+    }
+
+    .bico-num {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .bico-num small {
+      font-size: 14px;
+      color: var(--text3);
+      font-weight: 600;
+    }
+
+    .bico-fuel-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .bico-prices {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .bico-price-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .bico-price-lv {
+      font-size: 10px;
+      color: var(--text3);
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .bico-price-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text2);
+      transition: all 0.3s;
+    }
+
+    .bico-price-val.updated {
+      color: var(--green);
+    }
+
+    .bico-status {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .bico-status.visible {
+      opacity: 1;
+    }
+
+    .bico-card.success .bico-status {
+      color: var(--green);
+    }
+
+    .bico-card.error .bico-status {
+      color: var(--red);
+    }
+
+    .cmd-preview {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(51, 68, 102, 0.7);
+    }
+
+    .cmd-preview-label {
+      font-size: 10px;
+      color: var(--text3);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 4px;
+    }
+
+    .cmd-preview-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      line-height: 1.45;
+      word-break: break-all;
+    }
+
+    /* LOG PANEL */
+    .log-panel {
+      margin-top: 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .log-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg3);
+    }
+
+    .log-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-clear-log {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .btn-clear-log:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .log-body {
+      padding: 12px 20px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 12px;
+      padding: 3px 0;
+    }
+
+    .log-time {
+      color: var(--text3);
+      flex-shrink: 0;
+    }
+
+    .log-msg.ok {
+      color: var(--green);
+    }
+
+    .log-msg.err {
+      color: var(--red);
+    }
+
+    .log-msg.info {
+      color: var(--accent);
+    }
+
+    .log-msg.warn {
+      color: var(--orange);
+    }
+
+    .log-msg.send {
+      color: var(--yellow);
+    }
+
+    .log-body::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .log-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .log-body::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 2px;
+    }
+
+    /* ===================== CONFIG SECTION ===================== */
+    .config-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .config-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .config-body {
+      padding: 20px;
+    }
+
+    .form-row {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text2);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--white);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 4px;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn-test {
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-test:hover {
+      background: var(--accent-glow);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .btn-save {
+      padding: 10px 20px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      border: none;
+      color: #000;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 16px rgba(0, 212, 255, 0.2);
+    }
+
+    .btn-save:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .users-panel {
+      grid-column: span 2;
+    }
+
+    .audit-panel {
+      grid-column: span 2;
+    }
+
+    .users-grid {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+    }
+
+    .users-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .users-card-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 14px;
+    }
+
+    .users-table-wrap {
+      overflow-x: auto;
+    }
+
+    .users-empty {
+      color: var(--text3);
+      font-size: 13px;
+      padding: 18px 0;
+      text-align: center;
+    }
+
+    .user-badge {
+      display: inline-flex;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      color: var(--accent);
+      background: rgba(0, 212, 255, 0.08);
+    }
+
+    .user-badge.super {
+      color: var(--yellow);
+      border-color: rgba(255, 214, 0, 0.2);
+      background: rgba(255, 214, 0, 0.08);
+    }
+
+    .audit-list {
+      padding: 20px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .audit-item {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .audit-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .audit-user {
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .audit-time {
+      font-size: 12px;
+      color: var(--text3);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .audit-body {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+
+    /* BICO CONFIG TABLE */
+    .bico-config-panel {
+      grid-column: span 2;
+    }
+
+    .bico-table-wrap {
+      padding: 20px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    td {
+      padding: 8px 14px;
+      border-bottom: 1px solid rgba(42, 58, 92, 0.5);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .td-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .td-input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--white);
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+      width: 70px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .td-input:focus {
+      border-color: var(--accent);
+    }
+
+    .fuel-select {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--white);
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Nunito', sans-serif;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-width: 160px;
+    }
+
+    .fuel-select:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-remove {
+      background: transparent;
+      border: 1px solid rgba(255, 68, 68, 0.3);
+      color: var(--red);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-remove:hover {
+      background: rgba(255, 68, 68, 0.1);
+    }
+
+    .btn-add-bico {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      background: var(--bg3);
+      border: 1px dashed var(--border2);
+      color: var(--text2);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.2s;
+      margin-top: 12px;
+    }
+
+    .btn-add-bico:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* MODAL / OVERLAY */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 32px;
+      width: 420px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: modal-in 0.2s ease-out;
+    }
+
+    @keyframes modal-in {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-8px);
+      }
+    }
+
+    .modal-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    .modal-sub {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    .btn-cancel {
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    /* TOAST */
+    .toast-area {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: var(--panel2);
+      border: 1px solid var(--border2);
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      animation: toast-in 0.3s ease-out;
+      max-width: 320px;
+    }
+
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+    }
+
+    .toast.ok {
+      border-color: var(--green);
+    }
+
+    .toast.err {
+      border-color: var(--red);
+    }
+
+    .toast.info {
+      border-color: var(--accent);
+    }
+
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at top left, rgba(0, 212, 255, 0.16), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(196, 113, 245, 0.12), transparent 28%),
+        rgba(5, 10, 20, 0.92);
+      backdrop-filter: blur(10px);
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 460px;
+      background: linear-gradient(180deg, rgba(31, 40, 64, 0.98), rgba(20, 27, 44, 0.98));
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      border-radius: 22px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+    }
+
+    .auth-head {
+      padding: 26px 28px 18px;
+      border-bottom: 1px solid rgba(42, 58, 92, 0.65);
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(255, 214, 0, 0.04));
+    }
+
+    .auth-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .auth-body {
+      padding: 24px 28px 28px;
+    }
+
+    .auth-error {
+      display: none;
+      margin-bottom: 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 68, 68, 0.25);
+      background: rgba(255, 68, 68, 0.08);
+      color: #ff9e9e;
+      font-size: 13px;
+    }
+
+    .auth-error.visible {
+      display: block;
+    }
+
+    .auth-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .auth-status {
+      font-size: 12px;
+      color: var(--text3);
+    }
+
+    /* STATS BAR */
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stat-icon {
+      font-size: 20px;
+    }
+
+    .stat-info {}
+
+    .stat-val {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text3);
+      font-size: 14px;
+    }
+
+    .empty-state .empty-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .price-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .config-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .bico-config-panel {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+
+<body class="auth-locked">
+
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-card">
+      <div class="auth-head">
+        <div class="auth-title">Acesso Autorizado</div>
+      </div>
+      <div class="auth-body">
+        <div class="auth-error" id="authError"></div>
+        <div class="form-row">
+          <label class="form-label" for="loginUser">Usuário</label>
+          <input class="form-input" id="loginUser" type="text" autocomplete="username" placeholder="Digite seu usuário">
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="loginPass">Senha</label>
+          <input class="form-input" id="loginPass" type="password" autocomplete="current-password"
+            placeholder="Digite sua senha">
+        </div>
+        <div class="auth-footer">
+          <div class="auth-status" id="authStatus">Conectando ao PostgreSQL local...</div>
+          <button class="btn-save" id="btnLogin" onclick="submitLogin()">Entrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-wrapper auth-hidden" id="appWrapper">
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo">
+        <div class="logo-icon">⛽</div>
+        <div>
+          <div class="logo-text">Preset AutoSystem</div>
+          <div class="logo-sub">Preset</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="user-pill" id="userPill">
+          <span>Usuário</span>
+          <strong id="userLabel">--</strong>
+        </div>
+        <div class="conn-status" id="connStatus" onclick="openConnModal()">
+          <div class="conn-dot" id="connDot"></div>
+          <span id="connLabel">Desconectado</span>
+        </div>
+        <button class="btn-config" onclick="switchTab('config')">⚙ Configurações</button>
+        <button class="btn-logout" id="btnLogout" onclick="logout()">Sair</button>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- PAGE HEADER -->
+      <div class="page-header">
+        <div class="page-title" id="pageTitle">Preset</div>
+        <div class="page-subtitle" id="pageSub">Defina o preset dos bicos configurados.</div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <div class="tab active" id="tab-prices" onclick="switchTab('prices')">💱 Preset</div>
+        <div class="tab" id="tab-identfid" onclick="switchTab('identfid')">💳 Cartões Identfid</div>
+        <div class="tab" id="tab-config" onclick="switchTab('config')">⚙ Configurações</div>
+        <div class="tab" id="tab-users" onclick="switchTab('users')">👤 Usuários</div>
+        <div class="tab" id="tab-audit" onclick="switchTab('audit')">🧾 Auditoria</div>
+      </div>
+
+      <!-- ===================== PRICES SECTION ===================== -->
+      <div class="section active" id="section-prices">
+
+        <!-- STATS BAR -->
+        <div class="stats-bar" id="statsBar"></div>
+
+        <!-- LAYOUT -->
+        <div class="price-layout">
+
+          <!-- LEFT: PRICE INPUTS -->
+          <div>
+            <div class="prices-panel" id="pricesPanelEl">
+              <div class="panel-header">💰 Definir Preset por Combustível</div>
+              <div id="fuelGroupsContainer">
+                <div class="empty-state">
+                  <div class="empty-icon">🔧</div>Configure os bicos em Configurações primeiro.
+                </div>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <button class="btn-send" id="btnSend" onclick="sendAllPrices()" disabled>
+                ▶ ENVIAR PRESET AO CONCENTRADOR
+              </button>
+              <button class="btn-read" id="btnReadPrices" onclick="readAllCurrentPrices()" disabled>
+                ⬇ CONSULTAR PRESET ATUAL
+              </button>
+            </div>
+          </div>
+
+          <!-- RIGHT: BICOS GRID -->
+          <div>
+            <div class="bicos-panel">
+              <div class="panel-header">⛽ Bicos do Posto</div>
+              <div class="bicos-grid" id="bicosGrid">
+                <div class="empty-state">
+                  <div class="empty-icon">⛽</div>Nenhum bico configurado.
+                </div>
+              </div>
+            </div>
+
+            <!-- LOG -->
+            <div class="log-panel">
+              <div class="log-header">
+                <div class="log-title">📡 Log de Comunicação</div>
+                <button class="btn-clear-log" onclick="clearLog()">Limpar</button>
+              </div>
+              <div class="log-body" id="logBody">
+                <div class="log-entry"><span class="log-time">--:--:--</span><span class="log-msg info">Sistema
+                    iniciado. Configure a conexão com o concentrador.</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===================== IDENTFID SECTION ===================== -->
+      <div class="section" id="section-identfid">
+        <div class="config-layout">
+          <div class="config-panel">
+            <div class="panel-header">💳 Cadastro de Cartões Identfid</div>
+            <div class="config-body">
+              <div class="form-row">
+                <label class="form-label">Código do Cartão</label>
+                <input class="form-input" id="identfidCardCode" type="text" placeholder="Ex: B3280909918DF4EC">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Permissão</label>
+                <input class="form-input" id="identfidPermissionLabel" type="text" value="2 - Liberar bombas" readonly>
+                <div class="form-hint">Permissão fixa. Isso compõe o controle 27, 28 ou 29 no comando de gravação.</div>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Tipo / Função</label>
+                <select class="fuel-select" id="identfidFunctionCode" style="min-width:100%;width:100%">
+                  <option value="7">7 - Frentista Dinheiro (nível 0 / controle 27)</option>
+                  <option value="8">8 - Frentista Crédito (nível 1 / controle 28)</option>
+                  <option value="9">9 - Frentista Débito (nível 2 / controle 29)</option>
+                </select>
+                <div class="form-hint">Os tipos 7, 8 e 9 seguem o mapeamento Companytec para funcionário nível 1, 2 e 3.
+                </div>
+              </div>
+              <div class="btn-row">
+                <button class="btn-save" onclick="writeIdentfidCard()">Gravar no Concentrador</button>
+              </div>
+              <div class="form-hint">A gravação é enviada diretamente ao concentrador pelo comando 0D. Nenhuma tabela
+                local de cartões é usada.</div>
+            </div>
+          </div>
+          <div class="config-panel">
+            <div class="panel-header">🗂 Cartões no Concentrador</div>
+            <div class="config-body">
+              <div class="btn-row">
+                <button class="btn-test" onclick="readIdentfidCards()">🔎 Ler Cartões do Concentrador</button>
+              </div>
+              <div class="users-table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Posição</th>
+                      <th>Código</th>
+                      <th>Controle</th>
+                      <th>Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody id="identfidTableBody">
+                    <tr>
+                      <td colspan="4" class="users-empty">Clique em "Ler Cartões do Concentrador".</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== CONFIG SECTION ===================== -->
+      <div class="section" id="section-config">
+
+        <div class="config-layout">
+
+          <!-- CONCENTRADOR CONFIG -->
+          <div class="config-panel">
+            <div class="panel-header">📡 Conexão com o Concentrador</div>
+            <div class="config-body">
+              <div class="form-row">
+                <label class="form-label">Endereço IP do Concentrador</label>
+                <input class="form-input" id="cfgIp" type="text" placeholder="192.168.1.100" value="">
+                <div class="form-hint">IP do concentrador na rede local</div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-row">
+                  <label class="form-label">Porta TCP</label>
+                  <input class="form-input" id="cfgPort" type="number" placeholder="3000" value="">
+                  <div class="form-hint">Porta padrão: 3000</div>
+                </div>
+                <div class="form-row">
+                  <label class="form-label">Timeout (ms)</label>
+                  <input class="form-input" id="cfgTimeout" type="number" placeholder="5000" value="5000">
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Senha do Concentrador (Login)</label>
+                <input class="form-input" id="cfgPass" type="password" placeholder="••••••••" value="">
+                <div class="form-hint">Deixe em branco se não houver senha configurada</div>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Texto do Nível 0</label>
+                <input class="form-input" id="cfgLevelTagP0" type="text" placeholder="NÍVEL 0 - DINHEIRO / À VISTA"
+                  value="">
+                <div class="form-hint">Texto exibido na tarja do nível 0</div>
+              </div>
+              <div class="form-row">
+                <input class="form-input" id="cfgLevelDescP0" type="text"
+                  placeholder="PREÇO NÍVEL 0 (DINHEIRO OU À VISTA)" value="">
+                <div class="form-hint">Descrição exibida abaixo da tarja do nível 0</div>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Texto do Nível 1</label>
+                <input class="form-input" id="cfgLevelTagP1" type="text" placeholder="NÍVEL 1 - CRÉDITO" value="">
+                <div class="form-hint">Texto exibido na tarja do nível 1</div>
+              </div>
+              <div class="form-row">
+                <input class="form-input" id="cfgLevelDescP1" type="text" placeholder="PREÇO NÍVEL 1 (CRÉDITO)"
+                  value="">
+                <div class="form-hint">Descrição exibida abaixo da tarja do nível 1</div>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Texto do Nível 2</label>
+                <input class="form-input" id="cfgLevelTagP2" type="text" placeholder="NÍVEL 2 - DÉBITO" value="">
+                <div class="form-hint">Texto exibido na tarja do nível 2</div>
+              </div>
+              <div class="form-row">
+                <input class="form-input" id="cfgLevelDescP2" type="text" placeholder="PREÇO NÍVEL 2 (DÉBITO)" value="">
+                <div class="form-hint">Descrição exibida abaixo da tarja do nível 2</div>
+              </div>
+              <div class="btn-row">
+                <button class="btn-test" onclick="testConnection()">🔌 Testar Conexão</button>
+                <button class="btn-save" onclick="saveConfig()">💾 Salvar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- POSTO CONFIG -->
+          <div class="config-panel">
+            <div class="panel-header">🏪 Informações do Posto</div>
+            <div class="config-body">
+              <div class="form-row">
+                <label class="form-label">Nome do Posto</label>
+                <input class="form-input" id="cfgPostoNome" type="text" placeholder="Posto Central" value="">
+              </div>
+              <div class="form-row">
+                <label class="form-label">CNPJ / Código</label>
+                <input class="form-input" id="cfgPostoCnpj" type="text" placeholder="00.000.000/0000-00" value="">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Casas Decimais no Preço</label>
+                <select class="fuel-select" id="cfgDecimals" style="min-width:100%;width:100%">
+                  <option value="2">2 casas (ex: 5,99)</option>
+                  <option value="3" selected>3 casas (ex: 5,990)</option>
+                </select>
+                <div class="form-hint">Configurar conforme as bombas do posto</div>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Intervalo entre envios (ms)</label>
+                <input class="form-input" id="cfgDelay" type="number" placeholder="300" value="300">
+                <div class="form-hint">Tempo de espera entre comandos a cada bico</div>
+              </div>
+              <div class="btn-row">
+                <button class="btn-save" onclick="saveConfig()">💾 Salvar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- BICOS CONFIG -->
+          <div class="config-panel bico-config-panel">
+            <div class="panel-header">🔧 Configuração dos Bicos</div>
+            <div class="bico-table-wrap">
+              <table id="bicoTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Número do Bico</th>
+                    <th>Combustível</th>
+                    <th>Cód. Bico (hex)</th>
+                    <th>Descrição (opcional)</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="bicoTableBody">
+                </tbody>
+              </table>
+              <button class="btn-add-bico" onclick="addBicoRow()">＋ Adicionar Bico</button>
+              <div style="margin-top:16px;">
+                <button class="btn-save" onclick="saveBicos()">💾 Salvar Bicos</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===================== USERS SECTION ===================== -->
+      <div class="section" id="section-users">
+        <div class="config-layout">
+          <div class="config-panel users-panel" id="usersPanel">
+            <div class="panel-header">👤 Usuários do Aplicativo</div>
+            <div class="users-grid">
+              <div class="users-card">
+                <div class="users-card-title">Novo Usuário</div>
+                <div class="form-row">
+                  <label class="form-label">Usuário</label>
+                  <input class="form-input" id="newUserName" type="text" placeholder="ex: operador1">
+                </div>
+                <div class="form-row">
+                  <label class="form-label">Senha</label>
+                  <input class="form-input" id="newUserPass" type="password" placeholder="Defina uma senha">
+                </div>
+                <div class="form-row">
+                  <label class="form-label">Permissões</label>
+                  <div style="display:grid;gap:10px;margin-top:8px;">
+                    <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);">
+                      <input type="checkbox" id="newUserCanAdjust" checked>
+                      Pode reajustar preços
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);">
+                      <input type="checkbox" id="newUserSuper">
+                      Superusuário
+                    </label>
+                  </div>
+                </div>
+                <div class="btn-row">
+                  <button class="btn-save" onclick="createUser()">Salvar Usuário</button>
+                </div>
+                <div class="form-hint">Somente superusuários podem cadastrar usuários e definir outros superusuários.
+                </div>
+              </div>
+
+              <div class="users-card">
+                <div class="users-card-title">Usuários Cadastrados</div>
+                <div class="users-table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Usuário</th>
+                        <th>Perfil</th>
+                        <th>Reajuste</th>
+                        <th>Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                      <tr>
+                        <td colspan="4" class="users-empty">Carregando usuários...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== AUDIT SECTION ===================== -->
+      <div class="section" id="section-audit">
+        <div class="config-layout">
+          <div class="config-panel audit-panel" id="auditPanel">
+            <div class="panel-header">🧾 Auditoria de Presets</div>
+            <div class="audit-list" id="auditList">
+              <div class="users-empty">Carregando histórico...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /app-wrapper -->
+
+  <!-- TOAST AREA -->
+  <div class="toast-area" id="toastArea"></div>
+
+  <!-- CONNECTION MODAL -->
+  <div class="modal-overlay" id="connModal">
+    <div class="modal">
+      <div class="modal-title">Conexão com o Concentrador</div>
+      <div class="modal-sub" id="connModalBody">Configure o IP e porta do concentrador nas configurações.</div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeConnModal()">Fechar</button>
+        <button class="btn-save" onclick="testConnection(); closeConnModal()">🔌 Testar Agora</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // STATE
+    // ============================================================
+    let config = {
+      ip: '',
+      port: 3000,
+      password: '',
+      timeout: 5000,
+      delay: 300,
+      decimals: 3,
+      postoNome: '',
+      postoCnpj: '',
+      levelTexts: {
+        p0: { tag: 'NÍVEL 0 - DINHEIRO / À VISTA', description: 'PREÇO NÍVEL 0 (DINHEIRO OU À VISTA)' },
+        p1: { tag: 'NÍVEL 1 - CRÉDITO', description: 'PREÇO NÍVEL 1 (CRÉDITO)' },
+        p2: { tag: 'NÍVEL 2 - DÉBITO', description: 'PREÇO NÍVEL 2 (DÉBITO)' }
+      }
+    };
+
+    let bicos = []; // [{id, num, fuel, code, desc}]
+    let connected = false;
+    let fuelPrices = {}; // {fuelKey: {p0: '5.990', p1: '6.090', p2: '5.990'}}
+    let authToken = localStorage.getItem('ht_auth_token') || '';
+    let currentUser = null;
+    let managedUsers = [];
+    let auditEntries = [];
+    let identfidCards = [];
+    let stateSaveTimer = null;
+
+    const FUELS = [
+      { key: 'gasolina_c', label: 'Gasolina C', color: '#ff6b35', bg: 'rgba(255,107,53,0.15)', code: '01' },
+      { key: 'gasolina_aditivada', label: 'Gasolina Aditivada', color: '#c471f5', bg: 'rgba(196,113,245,0.15)', code: '02' },
+      { key: 'etanol', label: 'Etanol', color: '#00e676', bg: 'rgba(0,230,118,0.15)', code: '19' },
+      { key: 'diesel_s10', label: 'Diesel Aditivado / S-10', color: '#ffd600', bg: 'rgba(255,214,0,0.15)', code: '11' },
+      { key: 'diesel_s500', label: 'Diesel / S-500', color: '#ffaa00', bg: 'rgba(255,170,0,0.15)', code: '10' },
+      { key: 'gnv', label: 'GNV', color: '#00d4ff', bg: 'rgba(0,212,255,0.15)', code: '17' },
+    ];
+
+    const PRICE_LEVELS = [
+      { key: 'p0', level: 0, shortLabel: 'À vista', label: 'Dinheiro / À vista', description: 'Preço nível 0 (dinheiro ou à vista)', tag: 'NÍVEL 0 - DINHEIRO / À VISTA' },
+      { key: 'p1', level: 1, shortLabel: 'Crédito', label: 'Crédito', description: 'Preço nível 1 (crédito)', tag: 'NÍVEL 1 - CRÉDITO' },
+      { key: 'p2', level: 2, shortLabel: 'Débito', label: 'Débito', description: 'Preço nível 2 (débito)', tag: 'NÍVEL 2 - DÉBITO' }
+    ];
+
+    function blankFuelPrice() {
+      return { p0: '', p1: '', p2: '' };
+    }
+
+    function normalizeFuelPrices(value) {
+      const out = {};
+      if (!value || typeof value !== 'object') return out;
+      for (const [fuelKey, prices] of Object.entries(value)) {
+        out[fuelKey] = {
+          p0: prices?.p0 || '',
+          p1: prices?.p1 || '',
+          p2: prices?.p2 || ''
+        };
+      }
+      return out;
+    }
+
+    function ensureFuelPrice(fuelKey) {
+      if (!fuelPrices[fuelKey]) fuelPrices[fuelKey] = blankFuelPrice();
+      return fuelPrices[fuelKey];
+    }
+
+    function normalizePriceInput(rawValue) {
+      if (rawValue === undefined || rawValue === null) return '';
+      const sanitized = String(rawValue).replace(',', '.').trim();
+      if (!sanitized) return '';
+      const numeric = Number(sanitized);
+      if (!Number.isFinite(numeric) || numeric < 0) return '';
+      return sanitized;
+    }
+
+    function formatPrice(value) {
+      if (value === undefined || value === null || value === '') return '—';
+      const numeric = Number(String(value).replace(',', '.'));
+      if (!Number.isFinite(numeric)) return '—';
+      return `R$ ${numeric.toFixed(config.decimals || 3)}`;
+    }
+
+    function getLevelMeta(levelKey) {
+      return PRICE_LEVELS.find(item => item.key === levelKey);
+    }
+
+    function getResolvedPriceLevels() {
+      return PRICE_LEVELS.map(level => {
+        const custom = config.levelTexts?.[level.key] || {};
+        return {
+          ...level,
+          tag: custom.tag || level.tag,
+          description: custom.description || level.description,
+          displayName: custom.tag || level.tag
+        };
+      });
+    }
+
+    // ============================================================
+    // PERSISTENCE
+    // ============================================================
+    function getLegacyLocalState() {
+      try {
+        const c = localStorage.getItem('ht_config');
+        const b = localStorage.getItem('ht_bicos');
+        const p = localStorage.getItem('ht_prices');
+        return {
+          config: c ? JSON.parse(c) : null,
+          bicos: b ? JSON.parse(b) : null,
+          fuelPrices: p ? normalizeFuelPrices(JSON.parse(p)) : null
+        };
+      } catch (e) {
+        return { config: null, bicos: null, fuelPrices: null };
+      }
+    }
+
+    function clearLegacyLocalState() {
+      localStorage.removeItem('ht_config');
+      localStorage.removeItem('ht_bicos');
+      localStorage.removeItem('ht_prices');
+    }
+
+    function applyAppState(state) {
+      const incoming = state || {};
+      config = { ...config, ...(incoming.config || {}) };
+      bicos = Array.isArray(incoming.bicos) ? incoming.bicos : [];
+      fuelPrices = normalizeFuelPrices(incoming.fuelPrices || {});
+    }
+
+    function hasLegacyLocalState() {
+      const legacy = getLegacyLocalState();
+      return Boolean(
+        legacy.config ||
+        (Array.isArray(legacy.bicos) && legacy.bicos.length) ||
+        (legacy.fuelPrices && Object.keys(legacy.fuelPrices).length)
+      );
+    }
+
+    async function saveAppState() {
+      if (!currentUser) return null;
+      const resp = await fetch('/api/app-state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ config, bicos, fuelPrices })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao salvar dados do aplicativo.');
+      applyAppState(data.state);
+      clearLegacyLocalState();
+      return data.state;
+    }
+
+    function scheduleAppStateSave() {
+      if (!currentUser) return;
+      clearTimeout(stateSaveTimer);
+      stateSaveTimer = setTimeout(async () => {
+        try {
+          await saveAppState();
+        } catch (e) {
+          addLog('warn', `Falha ao salvar dados no banco: ${e.message}`);
+        }
+      }, 500);
+    }
+
+    async function loadAppState() {
+      if (!currentUser) return;
+      const resp = await fetch('/api/app-state', { headers: authHeaders() });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao carregar dados do aplicativo.');
+
+      const state = data.state || {};
+      const shouldMigrateLegacy = !state.updatedBy && hasLegacyLocalState();
+      if (shouldMigrateLegacy) {
+        applyAppState(getLegacyLocalState());
+        await saveAppState();
+      } else {
+        applyAppState(state);
+      }
+
+      renderConfigForm();
+      renderBicoTable();
+      renderPricesPanel();
+      renderBicosGrid();
+      renderStats();
+    }
+
+    function updateAuthUi() {
+      const overlay = document.getElementById('authOverlay');
+      const wrapper = document.getElementById('appWrapper');
+      const userPill = document.getElementById('userPill');
+      const userLabel = document.getElementById('userLabel');
+      const btnLogout = document.getElementById('btnLogout');
+      const usersPanel = document.getElementById('usersPanel');
+      const auditPanel = document.getElementById('auditPanel');
+      const usersTab = document.getElementById('tab-users');
+      const auditTab = document.getElementById('tab-audit');
+
+      if (currentUser) {
+        document.body.classList.remove('auth-locked');
+        overlay.style.display = 'none';
+        wrapper.classList.remove('auth-hidden');
+        userPill.classList.add('visible');
+        btnLogout.classList.add('visible');
+        userLabel.textContent = currentUser.username || currentUser.nome || 'Autorizado';
+        usersPanel.style.display = currentUser.isSuperuser ? 'block' : 'none';
+        auditPanel.style.display = 'block';
+        usersTab.style.display = currentUser.isSuperuser ? 'flex' : 'none';
+        auditTab.style.display = 'flex';
+        if (!currentUser.isSuperuser && document.getElementById('section-users').classList.contains('active')) {
+          switchTab('prices');
+        }
+      } else {
+        document.body.classList.add('auth-locked');
+        overlay.style.display = 'flex';
+        wrapper.classList.add('auth-hidden');
+        userPill.classList.remove('visible');
+        btnLogout.classList.remove('visible');
+        userLabel.textContent = '--';
+        usersPanel.style.display = 'none';
+        auditPanel.style.display = 'none';
+        usersTab.style.display = 'none';
+        auditTab.style.display = 'none';
+      }
+    }
+
+    function setAuthStatus(message, isError = false) {
+      const status = document.getElementById('authStatus');
+      const error = document.getElementById('authError');
+      status.textContent = message;
+      error.textContent = isError ? message : '';
+      error.classList.toggle('visible', isError);
+    }
+
+    function authHeaders() {
+      return authToken ? { Authorization: `Bearer ${authToken}` } : {};
+    }
+
+    async function validateSession() {
+      if (!authToken) {
+        currentUser = null;
+        updateAuthUi();
+        setAuthStatus('Informe seu usuário e senha para continuar.');
+        return;
+      }
+
+      try {
+        const resp = await fetch('/api/session', { headers: authHeaders() });
+        if (!resp.ok) throw new Error('Sessão expirada');
+        const data = await resp.json();
+        currentUser = data.user;
+        updateAuthUi();
+        await loadAppState();
+        setAuthStatus(`Acesso liberado para ${currentUser.username}.`);
+        if (currentUser.isSuperuser) await loadManagedUsers();
+        await loadAuditEntries();
+      } catch (e) {
+        authToken = '';
+        currentUser = null;
+        localStorage.removeItem('ht_auth_token');
+        updateAuthUi();
+        setAuthStatus('Informe seu usuário e senha para continuar.');
+      }
+    }
+
+    async function submitLogin() {
+      const btn = document.getElementById('btnLogin');
+      const username = document.getElementById('loginUser').value.trim();
+      const password = document.getElementById('loginPass').value;
+
+      if (!username || !password) {
+        setAuthStatus('Informe usuário e senha.', true);
+        return;
+      }
+
+      btn.disabled = true;
+      setAuthStatus('Validando permissões no PostgreSQL...');
+
+      try {
+        const resp = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha na autenticação.');
+
+        authToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem('ht_auth_token', authToken);
+        updateAuthUi();
+        await loadAppState();
+        setAuthStatus(`Acesso liberado para ${currentUser.username}.`);
+        showToast('ok', `✅ Login autorizado para ${currentUser.username}`);
+        addLog('ok', `Usuário autenticado: ${currentUser.username}`);
+        if (currentUser.isSuperuser) await loadManagedUsers();
+        await loadAuditEntries();
+      } catch (e) {
+        authToken = '';
+        currentUser = null;
+        localStorage.removeItem('ht_auth_token');
+        updateAuthUi();
+        setAuthStatus(e.message, true);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function logout() {
+      try {
+        await fetch('/api/logout', { method: 'POST', headers: authHeaders() });
+      } catch (e) { }
+      clearTimeout(stateSaveTimer);
+      authToken = '';
+      currentUser = null;
+      managedUsers = [];
+      auditEntries = [];
+      identfidCards = [];
+      localStorage.removeItem('ht_auth_token');
+      updateAuthUi();
+      setAuthStatus('Sessão encerrada. Entre novamente para continuar.');
+    }
+
+    function ensureAuthenticated() {
+      if (currentUser) return true;
+      setAuthStatus('Faça login para acessar o reajuste.', true);
+      updateAuthUi();
+      return false;
+    }
+
+    async function loadManagedUsers() {
+      if (!currentUser?.isSuperuser) return;
+      const tbody = document.getElementById('usersTableBody');
+      tbody.innerHTML = '<tr><td colspan="4" class="users-empty">Carregando usuários...</td></tr>';
+
+      try {
+        const resp = await fetch('/api/users', { headers: authHeaders() });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao carregar usuários.');
+        managedUsers = data.users || [];
+        renderUsersTable();
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="4" class="users-empty">${e.message}</td></tr>`;
+      }
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById('usersTableBody');
+      if (!currentUser?.isSuperuser) {
+        tbody.innerHTML = '<tr><td colspan="4" class="users-empty">Apenas o superusuário pode visualizar os usuários.</td></tr>';
+        return;
+      }
+
+      if (!managedUsers.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="users-empty">Nenhum usuário cadastrado.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = managedUsers.map(user => `
+    <tr>
+      <td>${escHtml(user.username)}</td>
+      <td><span class="user-badge ${user.isSuperuser ? 'super' : ''}">${user.isSuperuser ? 'Superusuário' : 'Operador'}</span></td>
+      <td>${user.canAdjustPrices ? 'Sim' : 'Não'}</td>
+      <td>${user.username.toLowerCase() === 'autosystem' ? 'Protegido' : `<button class="btn-remove" onclick="deleteUser('${user.id}')">Remover</button>`}</td>
+    </tr>
+  `).join('');
+    }
+
+    async function createUser() {
+      if (!currentUser?.isSuperuser) {
+        showToast('err', '❌ Apenas o superusuário pode cadastrar usuários.');
+        return;
+      }
+
+      const username = document.getElementById('newUserName').value.trim();
+      const password = document.getElementById('newUserPass').value;
+      const canAdjustPrices = document.getElementById('newUserCanAdjust').checked;
+      const isSuperuser = document.getElementById('newUserSuper').checked;
+
+      if (!username || !password) {
+        showToast('err', '❌ Informe usuário e senha para o novo cadastro.');
+        return;
+      }
+
+      try {
+        const resp = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ username, password, canAdjustPrices, isSuperuser, active: true })
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao criar usuário.');
+
+        document.getElementById('newUserName').value = '';
+        document.getElementById('newUserPass').value = '';
+        document.getElementById('newUserCanAdjust').checked = true;
+        document.getElementById('newUserSuper').checked = false;
+
+        showToast('ok', `✅ Usuário ${data.user.username} criado com sucesso.`);
+        await loadManagedUsers();
+      } catch (e) {
+        showToast('err', `❌ ${e.message}`);
+      }
+    }
+
+    async function loadAuditEntries() {
+      if (!currentUser) return;
+      const list = document.getElementById('auditList');
+      list.innerHTML = '<div class="users-empty">Carregando histórico...</div>';
+
+      try {
+        const resp = await fetch('/api/audit/reajustes', { headers: authHeaders() });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao carregar auditoria.');
+        auditEntries = data.entries || [];
+        renderAuditEntries();
+      } catch (e) {
+        list.innerHTML = `<div class="users-empty">${e.message}</div>`;
+      }
+    }
+
+    function renderAuditEntries() {
+      const list = document.getElementById('auditList');
+      if (!auditEntries.length) {
+        list.innerHTML = '<div class="users-empty">Nenhum reajuste auditado até o momento.</div>';
+        return;
+      }
+
+      list.innerHTML = auditEntries.slice(0, 30).map(entry => {
+        const payload = entry.payload || {};
+        const levels = (payload.levels || []).map(level => `${level.label}: ${level.value}`).join(' | ');
+        return `
+      <div class="audit-item">
+        <div class="audit-top">
+          <div class="audit-user">${escHtml(entry.user?.username || 'desconhecido')}</div>
+          <div class="audit-time">${new Date(entry.createdAt).toLocaleString('pt-BR')}</div>
+        </div>
+        <div class="audit-body">
+          Bico ${escHtml(String(payload.bico ?? '--'))} • ${escHtml(payload.fuelLabel || 'Combustível não informado')} • ${levels || 'Sem níveis'}
+        </div>
+      </div>
+    `;
+      }).join('');
+    }
+
+    async function auditPriceChange(entry) {
+      if (!currentUser) return;
+      try {
+        await fetch('/api/audit/reajustes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify(entry)
+        });
+        await loadAuditEntries();
+      } catch (e) {
+        addLog('warn', `Auditoria local não gravada: ${e.message}`);
+      }
+    }
+
+    async function deleteUser(id) {
+      if (!currentUser?.isSuperuser) return;
+      try {
+        const resp = await fetch(`/api/users/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: authHeaders()
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao remover usuário.');
+        showToast('ok', '✅ Usuário removido com sucesso.');
+        await loadManagedUsers();
+      } catch (e) {
+        showToast('err', `❌ ${e.message}`);
+      }
+    }
+
+    function parseIdentfidControlCode(functionCode) {
+      const map = {
+        '7': { control: '27', label: 'Frentista Dinheiro' },
+        '8': { control: '28', label: 'Frentista Crédito' },
+        '9': { control: '29', label: 'Frentista Débito' }
+      };
+      const item = map[String(functionCode || '').trim()];
+      if (!item) throw new Error('Função Identfid inválida. Use 7, 8 ou 9.');
+      return item;
+    }
+
+    function buildIdentfidWriteCommand(cardCode, functionCode) {
+      const normalizedCardCode = String(cardCode || '').trim().toUpperCase();
+      if (!/^[0-9A-F]{16}$/.test(normalizedCardCode)) {
+        throw new Error('O código do cartão deve ter 16 caracteres hexadecimais.');
+      }
+      const control = parseIdentfidControlCode(functionCode).control;
+      return buildCommand('0D', `${normalizedCardCode}${control}`);
+    }
+
+    function parseIdentfidWriteResponse(resp, cardCode) {
+      const s = String(resp || '').trim();
+      const fullMatch = s.match(/^>!([0-9A-F]{4})0D(\d{6})([0-9A-F]{16})([0-9A-F]{2})$/i);
+      if (fullMatch) {
+        const [, sizeHex, position, storedCard, checksum] = fullMatch;
+        const payload = '!' + sizeHex + '0D' + position + storedCard;
+        const expectedChecksum = calculateChecksum(payload);
+        if (checksum.toUpperCase() !== expectedChecksum) {
+          throw new Error(`Checksum inválido na resposta do Identfid (${checksum} != ${expectedChecksum})`);
+        }
+        if (storedCard.toUpperCase() !== String(cardCode).trim().toUpperCase()) {
+          throw new Error('O concentrador respondeu com um código de cartão diferente do enviado.');
+        }
+        return { ok: true, position, cardCode: storedCard.toUpperCase(), raw: s };
+      }
+
+      const exec = parseExecutionResponse(s, '0D');
+      if (!exec.ok) throw new Error(exec.reason || 'Falha ao gravar cartão Identfid.');
+      return { ok: true, position: null, cardCode: String(cardCode).trim().toUpperCase(), raw: s };
+    }
+
+    function buildIdentfidSearchCommand(position) {
+      return buildCommand('0F', String(position).padStart(6, '0'));
+    }
+
+    function buildIdentfidDeleteCommand(position, cardCode) {
+      const normalizedCardCode = String(cardCode || '').trim().toUpperCase();
+      if (!/^[0-9A-F]{16}$/.test(normalizedCardCode)) {
+        throw new Error('O código do cartão deve ter 16 caracteres hexadecimais.');
+      }
+      const pos = String(position).padStart(6, '0');
+      return buildCommand('0E', `${pos}${normalizedCardCode}`);
+    }
+
+    function parseIdentfidSearchResponse(resp, requestedPosition) {
+      const s = String(resp || '').trim();
+      const emptyMatch = s.match(/^>!([0-9A-F]{4})0F([0-9A-F])([0-9A-F])([0-9A-F]{2})$/i);
+      if (emptyMatch) {
+        const [, sizeHex, status, errorCode, checksum] = emptyMatch;
+        const expectedChecksum = calculateChecksum('!' + sizeHex + '0F' + status + errorCode);
+        if (checksum.toUpperCase() !== expectedChecksum) {
+          throw new Error(`Checksum inválido na busca de Identfid (${checksum} != ${expectedChecksum})`);
+        }
+        return { found: false, position: requestedPosition, raw: s, status, errorCode };
+      }
+
+      const parts = s.split(';').map(part => part.trim()).filter(Boolean);
+      if (parts.length < 3) {
+        throw new Error(`Resposta inválida na busca de Identfid: ${s}`);
+      }
+
+      const position = String(parts[0]).padStart(6, '0');
+      const cardCode = String(parts[1] || '').replace(/\s+/g, '').toUpperCase();
+      const controlPart = String(parts[2] || '').trim();
+      const control = controlPart.split(':')[0].trim().toUpperCase();
+
+      return {
+        found: true,
+        position,
+        cardCode,
+        control,
+        label: controlPart,
+        raw: s
+      };
+    }
+
+    function parseIdentfidDeleteResponse(resp) {
+      const parsed = parseExecutionResponse(resp, '0E');
+      if (!parsed.ok) throw new Error(parsed.reason || 'Falha ao excluir cartão Identfid.');
+      return parsed;
+    }
+
+    function renderIdentfidCards() {
+      const tbody = document.getElementById('identfidTableBody');
+      if (!identfidCards.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="users-empty">Nenhum cartão encontrado no concentrador.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = identfidCards.map(card => `
+    <tr>
+      <td>${escHtml(card.position)}</td>
+      <td>${escHtml(card.cardCode)}</td>
+      <td>${escHtml(card.control)}</td>
+      <td><button class="btn-remove" onclick="deleteIdentfidCard('${card.position}','${card.cardCode}')">Excluir</button></td>
+    </tr>
+  `).join('');
+    }
+
+    async function readIdentfidCards() {
+      if (!ensureAuthenticated()) return;
+      if (!config.ip) {
+        showToast('err', '❌ Configure o concentrador antes de ler os cartões Identfid.');
+        return;
+      }
+
+      const tbody = document.getElementById('identfidTableBody');
+      tbody.innerHTML = '<tr><td colspan="4" class="users-empty">Lendo cartões do concentrador...</td></tr>';
+      identfidCards = [];
+      let emptyCount = 0;
+      const maxSlotsToScan = 100;
+
+      try {
+        for (let pos = 0; pos < maxSlotsToScan; pos++) {
+          const cmd = buildIdentfidSearchCommand(pos);
+          const resp = await tcpSend(cmd, { allowSimulation: false });
+          const parsed = parseIdentfidSearchResponse(resp, pos);
+          if (parsed.found) {
+            identfidCards.push(parsed);
+            emptyCount = 0;
+          } else {
+            emptyCount++;
+            if (emptyCount >= 10 && pos > 10) break;
+          }
+          await sleep(config.delay || 300);
+        }
+
+        renderIdentfidCards();
+        showToast('ok', `✅ ${identfidCards.length} cartão(ões) encontrado(s) no concentrador.`);
+        addLog('ok', `Leitura de cartões Identfid concluída - ${identfidCards.length} encontrado(s).`);
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="4" class="users-empty">${escHtml(e.message)}</td></tr>`;
+        showToast('err', `❌ ${e.message}`);
+        addLog('err', `Falha ao ler cartões Identfid - ${e.message}`);
+      }
+    }
+
+    async function writeIdentfidCard() {
+      if (!ensureAuthenticated()) return;
+      const cardCode = document.getElementById('identfidCardCode').value.trim().toUpperCase();
+      const functionCode = document.getElementById('identfidFunctionCode').value;
+
+      if (!cardCode) {
+        showToast('err', '❌ Informe o código do cartão Identfid.');
+        return;
+      }
+
+      try {
+        if (!config.ip) throw new Error('Configure o concentrador antes de gravar cartões Identfid.');
+        const functionMeta = parseIdentfidControlCode(functionCode);
+        const cmd = buildIdentfidWriteCommand(cardCode, functionCode);
+        addLog('send', `Identfid ${cardCode} (${functionMeta.label}) -> ${cmd}`);
+        const resp = await tcpSend(cmd, { allowSimulation: false });
+        addLog('info', `Resposta bruta Identfid ${cardCode}: ${resp}`);
+        const parsed = parseIdentfidWriteResponse(resp, cardCode);
+        document.getElementById('identfidCardCode').value = '';
+        document.getElementById('identfidFunctionCode').value = '7';
+        showToast('ok', `✅ Cartão ${parsed.cardCode} gravado no concentrador${parsed.position ? ` na posição ${parsed.position}` : ''}.`);
+        addLog('ok', `Cartão Identfid ${parsed.cardCode} gravado com sucesso${parsed.position ? ` na posição ${parsed.position}` : ''}.`);
+        await readIdentfidCards();
+      } catch (e) {
+        showToast('err', `❌ ${e.message}`);
+        addLog('err', `Falha ao gravar cartão Identfid ${cardCode} - ${e.message}`);
+      }
+    }
+
+    async function deleteIdentfidCard(position, cardCode) {
+      if (!ensureAuthenticated()) return;
+      try {
+        const cmd = buildIdentfidDeleteCommand(position, cardCode);
+        addLog('send', `Exclusão Identfid ${cardCode} posição ${position} -> ${cmd}`);
+        const resp = await tcpSend(cmd, { allowSimulation: false });
+        addLog('info', `Resposta bruta exclusão Identfid ${cardCode}: ${resp}`);
+        parseIdentfidDeleteResponse(resp);
+        showToast('ok', `✅ Cartão ${cardCode} excluído do concentrador.`);
+        addLog('ok', `Cartão Identfid ${cardCode} excluído da posição ${position}.`);
+        await readIdentfidCards();
+      } catch (e) {
+        showToast('err', `❌ ${e.message}`);
+        addLog('err', `Falha ao excluir cartão Identfid ${cardCode} - ${e.message}`);
+      }
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    async function init() {
+      renderConfigForm();
+      renderBicoTable();
+      renderPricesPanel();
+      renderBicosGrid();
+      renderStats();
+      updateConnStatus(false);
+      updateAuthUi();
+      setAuthStatus('Verificando sessão...');
+      await validateSession();
+    }
+
+    // ============================================================
+    // TAB SWITCHING
+    // ============================================================
+    function switchTab(tab) {
+      if (!ensureAuthenticated()) return;
+      if (tab === 'users' && !currentUser?.isSuperuser) {
+        switchTab('prices');
+        return;
+      }
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('section-' + tab).classList.add('active');
+
+      if (tab === 'prices') {
+        document.getElementById('pageTitle').textContent = 'Preset';
+        document.getElementById('pageSub').textContent = 'Defina o preset dos bicos configurados.';
+      } else if (tab === 'identfid') {
+        document.getElementById('pageTitle').textContent = 'Cartões Identfid';
+        document.getElementById('pageSub').textContent = 'Cadastre cartões com permissão 2 e função 7, 8 ou 9.';
+        if (config.ip) readIdentfidCards();
+      } else if (tab === 'users') {
+        document.getElementById('pageTitle').textContent = 'Usuários';
+        document.getElementById('pageSub').textContent = 'Cadastre e gerencie os usuários internos do aplicativo.';
+        if (currentUser?.isSuperuser) loadManagedUsers();
+      } else if (tab === 'audit') {
+        document.getElementById('pageTitle').textContent = 'Auditoria';
+        document.getElementById('pageSub').textContent = 'Consulte o histórico dos presets enviados pelo aplicativo.';
+        loadAuditEntries();
+      } else {
+        document.getElementById('pageTitle').textContent = '⚙ Configurações';
+        document.getElementById('pageSub').textContent = 'Configure a conexão com o concentrador e os bicos do posto.';
+      }
+    }
+
+    // ============================================================
+    // CONFIG FORM
+    // ============================================================
+    function renderConfigForm() {
+      document.getElementById('cfgIp').value = config.ip || '';
+      document.getElementById('cfgPort').value = config.port || 3000;
+      document.getElementById('cfgTimeout').value = config.timeout || 5000;
+      document.getElementById('cfgPass').value = config.password || '';
+      document.getElementById('cfgPostoNome').value = config.postoNome || '';
+      document.getElementById('cfgPostoCnpj').value = config.postoCnpj || '';
+      document.getElementById('cfgDecimals').value = config.decimals || 3;
+      document.getElementById('cfgDelay').value = config.delay || 300;
+      document.getElementById('cfgLevelTagP0').value = config.levelTexts?.p0?.tag || '';
+      document.getElementById('cfgLevelDescP0').value = config.levelTexts?.p0?.description || '';
+      document.getElementById('cfgLevelTagP1').value = config.levelTexts?.p1?.tag || '';
+      document.getElementById('cfgLevelDescP1').value = config.levelTexts?.p1?.description || '';
+      document.getElementById('cfgLevelTagP2').value = config.levelTexts?.p2?.tag || '';
+      document.getElementById('cfgLevelDescP2').value = config.levelTexts?.p2?.description || '';
+    }
+
+    async function saveConfig() {
+      if (!ensureAuthenticated()) return;
+      config.ip = document.getElementById('cfgIp').value.trim();
+      config.port = parseInt(document.getElementById('cfgPort').value) || 3000;
+      config.timeout = parseInt(document.getElementById('cfgTimeout').value) || 5000;
+      config.password = document.getElementById('cfgPass').value;
+      config.postoNome = document.getElementById('cfgPostoNome').value.trim();
+      config.postoCnpj = document.getElementById('cfgPostoCnpj').value.trim();
+      config.decimals = parseInt(document.getElementById('cfgDecimals').value);
+      config.delay = parseInt(document.getElementById('cfgDelay').value) || 300;
+      config.levelTexts = {
+        p0: {
+          tag: document.getElementById('cfgLevelTagP0').value.trim() || 'NÍVEL 0 - DINHEIRO / À VISTA',
+          description: document.getElementById('cfgLevelDescP0').value.trim() || 'PREÇO NÍVEL 0 (DINHEIRO OU À VISTA)'
+        },
+        p1: {
+          tag: document.getElementById('cfgLevelTagP1').value.trim() || 'NÍVEL 1 - CRÉDITO',
+          description: document.getElementById('cfgLevelDescP1').value.trim() || 'PREÇO NÍVEL 1 (CRÉDITO)'
+        },
+        p2: {
+          tag: document.getElementById('cfgLevelTagP2').value.trim() || 'NÍVEL 2 - DÉBITO',
+          description: document.getElementById('cfgLevelDescP2').value.trim() || 'PREÇO NÍVEL 2 (DÉBITO)'
+        }
+      };
+      try {
+        await saveAppState();
+        updateSendBtn();
+        renderPricesPanel();
+        renderBicosGrid();
+        renderStats();
+        showToast('ok', '✅ Configurações salvas com sucesso!');
+        addLog('info', `Configurações salvas no banco - Concentrador: ${config.ip}:${config.port}`);
+      } catch (e) {
+        showToast('err', `❌ ${e.message}`);
+      }
+    }
+
+    // ============================================================
+    // BICO TABLE
+    // ============================================================
+    let bicoRowId = 0;
+
+    function renderBicoTable() {
+      const tbody = document.getElementById('bicoTableBody');
+      tbody.innerHTML = '';
+      if (bicos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum bico configurado. Clique em "+ Adicionar Bico".</td></tr>';
+        return;
+      }
+      bicos.forEach((b, i) => {
+        tbody.appendChild(createBicoRow(b, i));
+      });
+    }
+
+    function createBicoRow(b, i) {
+      const tr = document.createElement('tr');
+      tr.dataset.index = i;
+
+      const fuelOpts = FUELS.map(f =>
+        `<option value="${f.key}" ${b.fuel === f.key ? 'selected' : ''}>${f.label}</option>`
+      ).join('');
+
+      tr.innerHTML = `
+    <td class="td-num">${i + 1}</td>
+    <td><input class="td-input" type="number" min="1" max="99" value="${b.num || ''}" placeholder="1" onchange="updateBico(${i},'num',this.value)"></td>
+    <td>
+      <select class="fuel-select" onchange="updateBico(${i},'fuel',this.value)">
+        ${fuelOpts}
+      </select>
+    </td>
+    <td><input class="form-input" data-field="code" style="min-width:120px;padding:7px 12px;text-transform:uppercase;" type="text" maxlength="2" value="${b.code || ''}" placeholder="04" onchange="updateBico(${i},'code',this.value)"></td>
+    <td><input class="form-input" data-field="desc" style="min-width:160px;padding:7px 12px;" type="text" value="${b.desc || ''}" placeholder="ex: Bomba 1 Lado A" onchange="updateBico(${i},'desc',this.value)"></td>
+    <td><button class="btn-remove" onclick="removeBico(${i})">✕ Remover</button></td>
+  `;
+      return tr;
+    }
+
+    function addBicoRow() {
+      if (!ensureAuthenticated()) return;
+      bicos.push({ num: bicos.length + 1, fuel: 'gasolina_c', code: '', desc: '' });
+      renderBicoTable();
+    }
+
+    function updateBico(i, field, val) {
+      if (!bicos[i]) return;
+      if (field === 'num') {
+        bicos[i][field] = parseInt(val);
+        return;
+      }
+      if (field === 'code') {
+        bicos[i][field] = String(val || '').trim().toUpperCase();
+        return;
+      }
+      bicos[i][field] = val;
+    }
+
+    function removeBico(i) {
+      if (!ensureAuthenticated()) return;
+      bicos.splice(i, 1);
+      renderBicoTable();
+    }
+
+    async function saveBicos() {
+      if (!ensureAuthenticated()) return;
+      // Collect latest values from DOM
+      const rows = document.querySelectorAll('#bicoTableBody tr[data-index]');
+      const bicoNums = new Set();
+      rows.forEach(tr => {
+        const i = parseInt(tr.dataset.index);
+        const numInput = tr.querySelector('input[type=number]');
+        const fuelSel = tr.querySelector('select');
+        const codeInput = tr.querySelector('input[data-field=code]');
+        const descInput = tr.querySelector('input[data-field=desc]');
+        if (bicos[i]) {
+          bicos[i].num = parseInt(numInput.value);
+          bicos[i].fuel = fuelSel.value;
+          bicos[i].code = String(codeInput?.value || '').trim().toUpperCase();
+          bicos[i].desc = descInput?.value || '';
+        }
+      });
+      for (const b of bicos) {
+        if (!Number.isInteger(b.num) || b.num < 1 || b.num > 99) {
+          showToast('err', '❌ O número do bico deve ficar entre 1 e 99.');
+          return;
+        }
+        if (b.code && !/^[0-9A-F]{2}$/.test(b.code)) {
+          showToast('err', `❌ O código hexadecimal do bico ${b.num} deve ter 2 dígitos, por exemplo 04 ou 1A.`);
+          return;
+        }
+        if (bicoNums.has(b.num)) {
+          showToast('err', `❌ O bico ${b.num} está duplicado. Ajuste a configuração.`);
+          return;
+        }
+        bicoNums.add(b.num);
+      }
+      try {
+        await saveAppState();
+        renderPricesPanel();
+        renderBicosGrid();
+        renderStats();
+        updateSendBtn();
+        showToast('ok', `✅ ${bicos.length} bico(s) salvos com sucesso!`);
+        addLog('info', `Configuração de bicos salva no banco - ${bicos.length} bicos no posto`);
+      } catch (e) {
+        showToast('err', `❌ ${e.message}`);
+      }
+    }
+
+    // ============================================================
+    // PRICES PANEL
+    // ============================================================
+    function getFuelsInUse() {
+      const used = new Set(bicos.map(b => b.fuel));
+      return FUELS.filter(f => used.has(f.key));
+    }
+
+    function onPriceInputChange(fuelKey, levelKey, rawValue) {
+      const prices = ensureFuelPrice(fuelKey);
+      prices[levelKey] = normalizePriceInput(rawValue);
+      scheduleAppStateSave();
+      updateBicoCard(fuelKey);
+    }
+
+    function renderPricesPanel() {
+      const container = document.getElementById('fuelGroupsContainer');
+      const fuelsInUse = getFuelsInUse();
+      const priceLevels = getResolvedPriceLevels();
+
+      if (fuelsInUse.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔧</div>Configure os bicos em Configurações primeiro.</div>';
+        updateSendBtn();
+        return;
+      }
+
+      container.innerHTML = '';
+      fuelsInUse.forEach(f => {
+        const prices = ensureFuelPrice(f.key);
+
+        const group = document.createElement('div');
+        group.className = 'fuel-group';
+        const bicoCount = bicos.filter(b => b.fuel === f.key).length;
+        const priceRows = priceLevels.map(level => `
+      <div class="price-row">
+        <div class="price-level-tag level-${level.level}">${level.tag}</div>
+        <div class="price-label">${level.description} (R$/L)</div>
+        <div class="price-input-wrap">
+          <span class="currency">R$</span>
+          <input class="price-input" type="number" step="0.001" min="0" placeholder="0.000"
+            value="${prices[level.key]}"
+            onchange="onPriceInputChange('${f.key}', '${level.key}', this.value)"
+            oninput="onPriceInputChange('${f.key}', '${level.key}', this.value)">
+        </div>
+      </div>
+    `).join('');
+
+        group.innerHTML = `
+      <div class="fuel-header" onclick="toggleFuel('${f.key}')">
+        <div class="fuel-dot" style="background:${f.color}; box-shadow: 0 0 6px ${f.color}"></div>
+        <div class="fuel-name">${f.label}</div>
+        <div class="fuel-bicos-count">${bicoCount} bico${bicoCount !== 1 ? 's' : ''} • produto ${f.code}</div>
+        <div class="fuel-chevron open" id="chev-${f.key}">▶</div>
+      </div>
+      <div class="fuel-prices open" id="fp-${f.key}">
+        ${priceRows}
+      </div>
+    `;
+        container.appendChild(group);
+      });
+
+      updateSendBtn();
+    }
+
+    function toggleFuel(key) {
+      const fp = document.getElementById('fp-' + key);
+      const chev = document.getElementById('chev-' + key);
+      fp.classList.toggle('open');
+      chev.classList.toggle('open');
+    }
+
+    function updateBicoCard(fuelKey) {
+      const cards = document.querySelectorAll(`.bico-card[data-fuel="${fuelKey}"]`);
+      cards.forEach(card => {
+        const prices = ensureFuelPrice(fuelKey);
+        getResolvedPriceLevels().forEach(level => {
+          const priceEl = card.querySelector(`.val-${level.key}`);
+          const value = prices[level.key];
+          if (!priceEl) return;
+          priceEl.textContent = formatPrice(value);
+          priceEl.classList.toggle('updated', Boolean(value));
+        });
+
+        const previewEl = card.querySelector('.cmd-preview-code');
+        if (previewEl) {
+          const bicoConf = bicos.find(x => x.num === parseInt(card.dataset.bicoNum));
+          const firstFilled = getResolvedPriceLevels().find(level => prices[level.key]);
+          if (firstFilled) {
+            const hex = bicoConf && bicoConf.code ? bicoConf.code : Number(card.dataset.bicoNum).toString(16);
+            previewEl.textContent = buildCompanytecPriceCommand(hex, firstFilled.level, prices[firstFilled.key]);
+          } else {
+            previewEl.textContent = 'Preencha um nível para pré-visualizar o comando';
+          }
+        }
+      });
+
+      updateSendBtn();
+    }
+
+    function updateSendBtn() {
+      const btn = document.getElementById('btnSend');
+      const readBtn = document.getElementById('btnReadPrices');
+      const hasAnyPrice = Object.values(fuelPrices).some(prices =>
+        getResolvedPriceLevels().some(level => prices?.[level.key])
+      );
+      btn.disabled = bicos.length === 0 || !hasAnyPrice;
+      if (readBtn) readBtn.disabled = bicos.length === 0 || !config.ip;
+    }
+
+    // ============================================================
+    // BICOS GRID
+    // ============================================================
+    function renderBicosGrid() {
+      const grid = document.getElementById('bicosGrid');
+      if (bicos.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><div class="empty-icon">⛽</div>Nenhum bico configurado.</div>';
+        return;
+      }
+
+      grid.innerHTML = '';
+      bicos.forEach(b => {
+        const fuel = FUELS.find(f => f.key === b.fuel) || FUELS[0];
+        const prices = ensureFuelPrice(b.fuel);
+        const previewLevel = getResolvedPriceLevels().find(level => prices[level.key]);
+        const card = document.createElement('div');
+        card.className = 'bico-card idle';
+        card.id = `bico-card-${b.num}`;
+        card.dataset.fuel = b.fuel;
+        card.dataset.bicoNum = b.num;
+        card.style.setProperty('--fuel-color', fuel.color);
+        card.querySelector && null;
+
+        card.innerHTML = `
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${fuel.color};border-radius:10px 10px 0 0;opacity:0.7;"></div>
+      <div class="bico-num"><small>Bico</small> ${b.num}</div>
+      <div class="bico-fuel-tag" style="background:${fuel.bg};color:${fuel.color}">${fuel.label} • ${fuel.code}</div>
+      ${b.desc ? `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">${b.desc}</div>` : ''}
+      <div class="bico-prices">
+        ${getResolvedPriceLevels().map(level => `
+          <div class="bico-price-row">
+            <span class="bico-price-lv">${escHtml(level.displayName)}</span>
+            <span class="bico-price-val val-${level.key}">${formatPrice(prices[level.key])}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="cmd-preview">
+        <div class="cmd-preview-label">Prévia do comando</div>
+        <div class="cmd-preview-code">${previewLevel ? buildCompanytecPriceCommand(b.code || b.num.toString(16), previewLevel.level, prices[previewLevel.key]) : 'Preencha um nível para pré-visualizar o comando'}</div>
+      </div>
+      <div class="bico-status" id="bico-status-${b.num}">✓</div>
+    `;
+        grid.appendChild(card);
+      });
+    }
+
+    // ============================================================
+    // STATS
+    // ============================================================
+    function renderStats() {
+      const bar = document.getElementById('statsBar');
+      const fuelsInUse = getFuelsInUse();
+      bar.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-icon">⛽</div>
+      <div class="stat-info">
+        <div class="stat-val">${bicos.length}</div>
+        <div class="stat-label">Bicos Configurados</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🔥</div>
+      <div class="stat-info">
+        <div class="stat-val">${fuelsInUse.length}</div>
+        <div class="stat-label">Combustíveis</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📡</div>
+      <div class="stat-info">
+        <div class="stat-val" style="font-size:14px;color:var(--text2)">${config.ip ? config.ip + ':' + config.port : 'Não configurado'}</div>
+        <div class="stat-label">Concentrador</div>
+      </div>
+    </div>
+    ${config.postoNome ? `<div class="stat-card"><div class="stat-icon">🏪</div><div class="stat-info"><div class="stat-val" style="font-size:15px">${config.postoNome}</div><div class="stat-label">Posto</div></div></div>` : ''}
+  `;
+    }
+
+    // ============================================================
+    // CONNECTION STATUS
+    // ============================================================
+    function updateConnStatus(isConnected, label) {
+      connected = isConnected;
+      const dot = document.getElementById('connDot');
+      const lbl = document.getElementById('connLabel');
+      if (isConnected) {
+        dot.className = 'conn-dot connected';
+        lbl.textContent = label || `${config.ip}:${config.port}`;
+      } else {
+        dot.className = 'conn-dot';
+        lbl.textContent = label || 'Desconectado';
+      }
+    }
+
+    function openConnModal() {
+      const modal = document.getElementById('connModal');
+      const body = document.getElementById('connModalBody');
+      if (config.ip) {
+        body.textContent = `Concentrador configurado em ${config.ip}:${config.port}. Status: ${connected ? '🟢 Conectado' : '🔴 Desconectado'}. Clique em "Testar Agora" para verificar a conexão.`;
+      } else {
+        body.textContent = 'Nenhum concentrador configurado. Acesse as Configurações para informar o IP e porta do concentrador.';
+      }
+      modal.classList.add('open');
+    }
+    function closeConnModal() {
+      document.getElementById('connModal').classList.remove('open');
+    }
+
+    // ============================================================
+    // PROTOCOLO DT214 — Implementação correta
+    // ============================================================
+    // Referência: seção 3.5.3 — Alteração de preço com níveis
+    //
+    // Estrutura do comando:
+    //   >?CCCC32BBNPPPPPPKK
+    //
+    //   >?      — delimitador + tipo (pergunta)
+    //   CCCC    — tamanho do campo de dados em hex (sempre 000B = 11 chars)
+    //   32      — índice do comando (hex) — alteração de preço com nível
+    //   BB      — número do bico (decimal, 2 chars, ex: "01")
+    //   N       — nível de preço (1 char: "0"=prazo/à vista, "1"=crédito, "2"=débito)
+    //   PPPPPP  — novo preço em milésimos, 6 chars decimais (ex: R$5,500 → "005500")
+    //   KK      — checksum: somatório ASCII dos bytes após '>', truncado em 1 byte, hex 2 chars
+    //
+    // Exemplo do manual (seção 3.5.3):
+    //   TX: >?000B320200011112C   (bico 02, nível 0, preço 001111 = R$1,111)
+    //   RX: >!00043200AA          (status '0' = sucesso, erro '0' = nenhum)
+    //
+    // Resposta de sucesso: >!CCCC32CDKK  onde C='0' (sucesso) e D='0' (sem erro)
+    //
+    // Checksum (seção 10): somatório ASCII de todos os chars após '>',
+    // mantendo apenas o byte menos significativo (& 0xFF), formatado em hex 2 chars.
+
+    function calculateChecksum(payload) {
+      let sum = 0;
+      for (let i = 0; i < payload.length; i++) sum += payload.charCodeAt(i);
+      return (sum & 0xFF).toString(16).toUpperCase().padStart(2, '0');
+    }
+
+    function buildCommand(indexHex, body = '') {
+      const data = indexHex + body;
+      const CCCC = data.length.toString(16).toUpperCase().padStart(4, '0');
+      return `>?${CCCC}${data}${calculateChecksum('?' + CCCC + data)}`;
+    }
+
+    function parsePriceToProtocol(price) {
+      const numeric = Number(String(price).replace(',', '.'));
+      if (!Number.isFinite(numeric) || numeric < 0) throw new Error('Preço inválido');
+      const scaled = Math.round(numeric * 1000);
+      if (scaled > 999999) throw new Error('Preço fora do limite de 6 dígitos do protocolo');
+      return String(scaled).padStart(6, '0');
+    }
+
+    function buildPriceCommand(bicoNum, level, price) {
+      return buildCommand('32', `${String(bicoNum).padStart(2, '0')}${level}${parsePriceToProtocol(price)}`);
+    }
+
+    function parsePriceToProtocolCompanytec(price) {
+      const numeric = Number(String(price).replace(',', '.'));
+      if (!Number.isFinite(numeric) || numeric < 0) throw new Error('Preço inválido');
+      const scaled = Math.round(numeric * 1000);
+
+      // If the price fits in 4 digits (e.g. 5,500 -> 5500), use 4 digits.
+      // If it's larger (e.g. 10,000 -> 10000), use 6 digits.
+      if (scaled <= 9999) {
+        return String(scaled).padStart(4, '0');
+      } else {
+        return String(scaled).padStart(6, '0');
+      }
+    }
+
+    function buildCompanytecPriceCommand(bicoCode, level, price) {
+      const bicoHex = String(bicoCode || '').trim().toUpperCase().padStart(2, '0');
+      const p = parsePriceToProtocolCompanytec(price);
+      const payload = `&U${bicoHex}${level}0${p}`;
+      const checksum = calculateCompanytecChecksum(payload);
+      return `(${payload}${checksum})`;
+    }
+
+    function buildStatusCommand() {
+      return buildCommand('01');
+    }
+
+    function calculateCompanytecChecksum(payload) {
+      let sum = 0;
+      for (let i = 0; i < payload.length; i++) sum += payload.charCodeAt(i);
+      return (sum & 0xFF).toString(16).toUpperCase().padStart(2, '0');
+    }
+
+    function buildCompanytecReadPricesCommand(bicoCode, threeLevels = true) {
+      const code = String(bicoCode || '').trim().toUpperCase();
+      if (!/^[0-9A-F]{2}$/.test(code)) {
+        throw new Error('Código hexadecimal do bico inválido para leitura Companytec.');
+      }
+      const mode = threeLevels ? 'u' : 'U';
+      const payload = `&T${code}${mode}`;
+      return `(${payload}${calculateCompanytecChecksum(payload)})`;
+    }
+
+    function buildReadPricesCommand(bicoNum) {
+      return buildCommand('05', `${String(bicoNum).padStart(2, '0')}09`);
+    }
+
+    function parseExecutionResponse(resp, expectedIndex) {
+      const s = String(resp || '').trim();
+      const match = s.match(/^>!([0-9A-F]{4})([0-9A-F]{2})(.)([0-9A-F])([0-9A-F]{2})$/i);
+      if (!match) return { ok: false, reason: 'Resposta fora do padrão DT214', raw: s };
+      const [, sizeHex, indexHex, status, errorCode, checksum] = match;
+      const expectedChecksum = calculateChecksum('!' + sizeHex + indexHex + status + errorCode);
+      if (indexHex.toUpperCase() !== expectedIndex.toUpperCase()) {
+        return { ok: false, reason: `Índice inesperado: ${indexHex}`, raw: s };
+      }
+      if (checksum.toUpperCase() !== expectedChecksum) {
+        return { ok: false, reason: `Checksum inválido na resposta (${checksum} != ${expectedChecksum})`, raw: s };
+      }
+      return { ok: status === '0', status, errorCode, raw: s };
+    }
+
+    function parseReadPricesResponse(resp, bicoNum) {
+      const s = String(resp || '').trim();
+      if (!s) throw new Error(`O concentrador não retornou dados para a leitura dos preços do bico ${bicoNum}`);
+
+      const companytec3 = s.match(/^\(TU([0-9A-F]{2})(\d{4})(\d{4})(\d{4})([0-9A-F]{2})\)$/i);
+      if (companytec3) {
+        const [, bicoResp, p1, p0, p2, checksum] = companytec3;
+        const expectedChecksum = calculateCompanytecChecksum(`TU${bicoResp}${p1}${p0}${p2}`);
+        if (checksum.toUpperCase() !== expectedChecksum) {
+          throw new Error(`Checksum inválido ao consultar o bico ${bicoNum}`);
+        }
+        return {
+          bicoCode: bicoResp.toUpperCase(),
+          p0: (Number(p0) / 1000).toFixed(config.decimals || 3),
+          p1: (Number(p1) / 1000).toFixed(config.decimals || 3),
+          p2: (Number(p2) / 1000).toFixed(config.decimals || 3)
+        };
+      }
+
+      const companytec2 = s.match(/^\(TU([0-9A-F]{2})(\d{4})(\d{4})([0-9A-F]{2})\)$/i);
+      if (companytec2) {
+        const [, bicoResp, p1, p0, checksum] = companytec2;
+        const expectedChecksum = calculateCompanytecChecksum(`TU${bicoResp}${p1}${p0}`);
+        if (checksum.toUpperCase() !== expectedChecksum) {
+          throw new Error(`Checksum inválido ao consultar o bico ${bicoNum}`);
+        }
+        return {
+          bicoCode: bicoResp.toUpperCase(),
+          p0: (Number(p0) / 1000).toFixed(config.decimals || 3),
+          p1: (Number(p1) / 1000).toFixed(config.decimals || 3),
+          p2: ''
+        };
+      }
+
+      const match = s.match(/^>!([0-9A-F]{4})05(\d{2})09(\d{6})(\d{6})(\d{6})([0-9A-F]{2})$/i);
+      if (!match) throw new Error(`Resposta inválida para leitura dos preços do bico ${bicoNum}`);
+      const [, sizeHex, bicoResp, p0, p1, p2, checksum] = match;
+      const expectedChecksum = calculateChecksum('!' + sizeHex + '05' + bicoResp + '09' + p0 + p1 + p2);
+      if (checksum.toUpperCase() !== expectedChecksum) {
+        throw new Error(`Checksum inválido ao consultar o bico ${bicoNum}`);
+      }
+      return {
+        bico: Number(bicoResp),
+        p0: (Number(p0) / 1000).toFixed(config.decimals || 3),
+        p1: (Number(p1) / 1000).toFixed(config.decimals || 3),
+        p2: (Number(p2) / 1000).toFixed(config.decimals || 3)
+      };
+    }
+
+    // Envia comando ao concentrador via WebSocket proxy (bridge TCP local).
+    // Browsers não possuem acesso nativo a TCP sockets — é necessário um proxy
+    // rodando localmente na porta 8765 que repasse os bytes ao concentrador.
+    //
+    // Para rodar o proxy Node.js (salve como ws-proxy.js e execute: node ws-proxy.js):
+    // ──────────────────────────────────────────────────────────────────
+    // const WebSocket = require('ws');
+    // const net = require('net');
+    // const wss = new WebSocket.Server({ port: 8765 });
+    // wss.on('connection', ws => {
+    //   ws.on('message', msg => {
+    //     const { host, port, cmd } = JSON.parse(msg);
+    //     const tcp = net.createConnection(port, host, () => tcp.write(cmd));
+    //     tcp.on('data', d => { ws.send(d.toString()); tcp.destroy(); });
+    //     tcp.on('error', e => { ws.send('ERR:' + e.message); tcp.destroy(); });
+    //   });
+    // });
+    // ──────────────────────────────────────────────────────────────────
+    async function tcpSend(cmd, options = {}) {
+      const allowSimulation = options.allowSimulation === true;
+      if (!config.ip || !config.port) throw new Error('Concentrador não configurado');
+      try {
+        const resp = await fetch('/api/protocol/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ host: config.ip, port: config.port, cmd })
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao encaminhar comando ao concentrador.');
+        return String(data.response || '').trim();
+      } catch (e) {
+        if (!allowSimulation) throw e;
+        addLog('warn', `Canal TCP local indisponível - modo simulação ativo (${e.message})`);
+        await sleep(config.delay || 300);
+        if (cmd.startsWith('>?000B32')) return '>!00043200AA';
+        if (cmd.startsWith('>?000201')) return '>!00020124';
+        if (cmd.startsWith('(&U')) {
+          const bico = cmd.substring(3, 5);
+          return `(U${bico})`;
+        }
+        if (cmd.startsWith('(&')) return '(&)';
+        return '>!00043200AA';
+      }
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // ============================================================
+    // SEND ALL PRICES
+    // ============================================================
+    async function sendAllPrices() {
+      if (!ensureAuthenticated()) return;
+      if (bicos.length === 0) { showToast('err', '❌ Nenhum bico configurado.'); return; }
+
+      const btn = document.getElementById('btnSend');
+      btn.disabled = true;
+      btn.textContent = '⏳ ENVIANDO...';
+
+      let ok = 0, fail = 0;
+
+      addLog('info', `--- Início do preset DT214 - ${bicos.length} bico(s) ---`);
+
+      for (const b of bicos) {
+        const fuel = FUELS.find(f => f.key === b.fuel);
+        const prices = ensureFuelPrice(b.fuel);
+        const payloads = getResolvedPriceLevels()
+          .filter(level => prices[level.key])
+          .map(level => ({ ...level, value: prices[level.key] }));
+
+        if (payloads.length === 0) {
+          addLog('warn', `Bico ${b.num} (${fuel?.label}): nenhum preço informado - pulado`);
+          continue;
+        }
+
+        const card = document.getElementById(`bico-card-${b.num}`);
+        const statusEl = document.getElementById(`bico-status-${b.num}`);
+
+        if (card) { card.className = 'bico-card sending'; statusEl.className = 'bico-status'; }
+
+        let bicoOk = true;
+
+        for (const item of payloads) {
+          try {
+            const hex = b.code || b.num.toString(16);
+            const cmd = buildCompanytecPriceCommand(hex, item.level, item.value);
+            addLog('send', `Bico ${b.num} | ${item.tag}: ${formatPrice(item.value)} -> ${cmd}`);
+            const resp = await tcpSend(cmd);
+            const s = String(resp || '').trim().toUpperCase();
+            const expectedAck = `(U${hex.padStart(2, '0').toUpperCase()})`;
+            if (!s.includes(expectedAck) && !s.includes('(&')) {
+              throw new Error(`Sem resposta válida do concentrador (Recebeu: ${s || 'NADA'}). Pode ser a porta ou o cabo.`);
+            }
+            addLog('ok', `Bico ${b.num} ${item.tag}: ACK OK (${resp})`);
+          } catch (e) {
+            addLog('err', `Bico ${b.num} ${item.tag}: FALHA - ${e.message}`);
+            bicoOk = false;
+          }
+          await sleep(config.delay || 300);
+        }
+
+        if (card) {
+          card.className = 'bico-card ' + (bicoOk ? 'success' : 'error');
+          if (statusEl) {
+            statusEl.textContent = bicoOk ? '✓' : '✕';
+            statusEl.className = 'bico-status visible';
+          }
+        }
+
+        await auditPriceChange({
+          bico: b.num,
+          fuelKey: b.fuel,
+          fuelLabel: fuel?.label || b.fuel,
+          success: bicoOk,
+          levels: payloads.map(item => ({ level: item.level, label: item.tag, value: formatPrice(item.value) })),
+          concentrador: `${config.ip}:${config.port}`,
+        });
+
+        if (bicoOk) ok++; else fail++;
+      }
+
+      addLog('info', `--- Concluído: ${ok} OK | ${fail} com falha ---`);
+
+      if (fail === 0) {
+        showToast('ok', `✅ Preset enviado: ${ok} bico(s) atualizado(s)!`);
+        updateConnStatus(true);
+      } else {
+        showToast('err', `⚠ ${ok} OK | ${fail} falha(s). Verifique o log.`);
+      }
+
+      updateSendBtn();
+      btn.textContent = '▶ ENVIAR PRESET AO CONCENTRADOR';
+    }
+
+    // ============================================================
+    // TEST CONNECTION
+    // ============================================================
+    async function testConnection() {
+      if (!ensureAuthenticated()) return;
+      if (!config.ip) {
+        showToast('err', '❌ Configure o IP do concentrador primeiro.');
+        return;
+      }
+      addLog('info', `Testando conexão com ${config.ip}:${config.port}...`);
+      updateConnStatus(false, 'Testando...');
+
+      try {
+        const resp = await tcpSend(buildStatusCommand());
+        updateConnStatus(true);
+        addLog('ok', `Conexão estabelecida com ${config.ip}:${config.port} (${resp})`);
+        showToast('ok', `✅ Conectado ao concentrador ${config.ip}:${config.port}`);
+      } catch (e) {
+        updateConnStatus(false, 'Falha na conexão');
+        addLog('err', `Falha ao conectar em ${config.ip}:${config.port} - ${e.message}`);
+        showToast('info', `ℹ Modo simulação ativo - proxy WebSocket não encontrado na porta 8765`);
+        setTimeout(() => { updateConnStatus(true, `${config.ip}:${config.port} (sim)`); }, 800);
+      }
+
+      updateSendBtn();
+    }
+
+    async function readAllCurrentPrices() {
+      if (!ensureAuthenticated()) return;
+      if (!config.ip) {
+        showToast('err', '❌ Configure o concentrador antes de consultar.');
+        return;
+      }
+
+      const btn = document.getElementById('btnReadPrices');
+      btn.disabled = true;
+      btn.textContent = '⏳ CONSULTANDO...';
+      addLog('info', `--- Consulta de preset atual via 05/09 para ${bicos.length} bico(s) ---`);
+
+      try {
+        for (const b of bicos) {
+          const cmd = b.code
+            ? buildCompanytecReadPricesCommand(b.code, true)
+            : buildReadPricesCommand(b.num);
+          addLog('send', `Consulta de preços bico ${b.num}: ${cmd}`);
+          const resp = await tcpSend(cmd, { allowSimulation: false });
+          addLog('info', `Resposta bruta bico ${b.num}: ${resp}`);
+          const parsed = parseReadPricesResponse(resp, b.num);
+          const prices = ensureFuelPrice(b.fuel);
+          prices.p0 = parsed.p0;
+          prices.p1 = parsed.p1;
+          prices.p2 = parsed.p2;
+          addLog('ok', `Bico ${b.num}: nível 0 ${formatPrice(parsed.p0)} | nível 1 ${formatPrice(parsed.p1)} | nível 2 ${formatPrice(parsed.p2)}`);
+          await sleep(config.delay || 300);
+        }
+
+        await saveAppState();
+        renderPricesPanel();
+        renderBicosGrid();
+        showToast('ok', '✅ Preset atual carregado do concentrador.');
+      } catch (e) {
+        addLog('err', `Falha na consulta de preset - ${e.message}`);
+        showToast('err', '❌ Não foi possível consultar o preset atual.');
+      }
+
+      updateSendBtn();
+      btn.textContent = '⬇ CONSULTAR PRESET ATUAL';
+    }
+
+    // ============================================================
+    // LOG
+    // ============================================================
+    function addLog(type, msg) {
+      const lb = document.getElementById('logBody');
+      const now = new Date();
+      const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `<span class="log-time">${time}</span><span class="log-msg ${type}">${escHtml(msg)}</span>`;
+      lb.appendChild(entry);
+      lb.scrollTop = lb.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('logBody').innerHTML = '';
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ============================================================
+    // TOAST
+    // ============================================================
+    function showToast(type, msg, duration = 3500) {
+      const area = document.getElementById('toastArea');
+      const icons = { ok: '✅', err: '❌', info: 'ℹ️' };
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.textContent = msg;
+      area.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(20px)';
+        t.style.transition = 'all 0.3s';
+        setTimeout(() => t.remove(), 300);
+      }, duration);
+    }
+
+    // ============================================================
+    // KEYBOARD SHORTCUT
+    // ============================================================
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !currentUser) {
+        submitLogin();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (!document.getElementById('btnSend').disabled) sendAllPrices();
+      }
+    });
+
+    // ============================================================
+    // START
+    // ============================================================
+    init();
+  </script>
+</body>
+
+</html>

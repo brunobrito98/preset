@@ -1,0 +1,251 @@
+=== 3.3.2 Grava????o de identificador @ -1 ===
+=== 3.3.2 Grava @ 1092 ===
+3.3.2 Gravação de identificador ........... 11 
+3.3.3 Exclusão de identificador ............ 11 
+3.3.4 Busca de identificadores ............. 12 
+3.3.5 Leitura de registro de 
+identificador…. ............................................. 13 
+3.3.6 Gravação automática de 
+identificadores ............................................. 14 
+3.3.7 Incremento de identificador ........ 14 
+3.3.8 Comando de lista negra .............. 15 
+3.4 STATUS ................................................... 16 
+3.4.1 Status .......................................... 16 
+3.4.2 Leitura de informações do 
+equipamento ................................................ 17 
+3.5 GERENCIAMENTO DE BOMBAS ..................... 20 
+3.5.1 Leitura de totalizadores .............. 20 
+3.5.2 Alteração de preço ...................... 22 
+3.5.3 Alteração de preço com níveis .... 23 
+3.5.4 Predeterminação (Preset) ........... 24 
+3.5.5 Predeterminação identificada 
+(Preset identificado) ..................................... 24 
+3.5.6 Predeterminação estendida (Preset 
+estendido) .................................................... 25 
+3.5.7 Predeterminação identificada 
+estendida (Preset identificado estendido) .... 26 
+3.5.8 Modo de operação ...................... 27 
+3.5.9 Tabela de bico ............................. 28 
+3.6 RELÓGIO ................................................. 29 
+3.6.1 Ajuste de calendário .................... 29 
+3.6.2 Leitura de calendário................... 29 
+3.7 GERENCIAMENTO DA AUTOMAÇÃO .............. 30 
+3.7.1 Leitura de configurações ............. 30 
+3.7.2 Diagnóstico ................................. 31 
+3.7.3 Leitura de arquivos ...................... 33 
+3.7.4 Leitura de índice do arquivo ........ 35 
+3.7.5 Diagnóstico wireless .................... 36 
+3.7.6 Leitura de porta(s) de comunicação 
+utilizadas.. .................................................... 36 
+4 CÓDIGOS DE ERRO .....................................37 
+5 CÓDIGOS DE STATUS DE EXECUÇÃO ...........38 
+6 CÓDIGOS DE TIPOS DE COMBUSTÍVEIS ......38 
+7 CÓDIGOS DE TIPOS DE SENSORES ..............38 
+8 CÓDIGOS DE MODELOS DE BOMBAS .........39 
+9 CÓDIGOS DE FORMA DE TRABALHO DO 
+SENSOR IDF ........................................................40 
+10 CÁLCULO DE CHECKSUM ............................40 
+ 
+ 
+Protocolo de Comunicação 
+Horustech 
+DT 214 
+Revisão: 09 
+08/03/2021 
+ 
+ 
+Página 3 de 41 \\192.168.0.250\Documentação SGQ\Publicações\Documento Técnico (DT)\Manuais 
+ 
+1 Introdução 
+• Todos os comandos são iniciados com o caractere “> “, seguido de”?” para consulta e”!” 
+para resposta da automação. 
+• Após os caracteres de início de bloco, o protocolo informa o tamanho dos dados, em 
+hexadecimal. 
+• O campo de dados é dividido em duas partes, o índice do comando, informado em 
+hexadecimal de dois caracteres (00...FF), e os parâmetros, que serão de tamanho 
+variável, de acordo com a informação do cabeçalho. 
+• Campos denominados “ICOM” são representados em decimal na faixa de 01 a 03, 
+contendo dois caracteres em qualquer comando/resposta. 
+• Campos denominados “Bomba” são representados em decimal na faixa de 1 a 4, 
+representado em um caractere em qualquer comando/resposta; 
+• Campos “bico” são representados em decimal, de 0 a 99; 
+• Campos tanque e combustível são representados em decimal, de 0 a 99; 
+• Campos “Conector” são representados em decimal, na faixa de 1 a 4 em decimal, sendo 
+apresentado sempre com um caractere; 
+• Um hexadecimal é representado como dois caracteres, como exemplo: o campo S [2] do 
+tipo hexadecimal, possui um dado hexadecimal, o campo K  [4] do tipo hexadecimal 
+possui 2 hexadecimais. Exemplos de números hexadecimais '1D', '05', '3F', 'FF'. 
+• O tamanho do comando é (CCCC) seria quantos caracteres o comando possuí retirando 
+o seu checksum, exemplo: 
+Comando: >?000402A1D7 
+>? – Caractere delimitador e tipo do comando; 
+0004 – Tamanho calculado 
+2A1 – Camada de dados, possuí 4 caracteres, então o tamanho do comando é 
+0004, este tamanho é verificado em decimal, mas quando incluído no 
+comando é posto em hexadecimal; 
+D7 – Cálculo do checksum do comando inteiro retirando o caractere delimitador. 
+2 Estrutura do comando 
+Todos os comandos são definidos como a figura abaixo, eles consistem em uma camada de 
+transporte, uma região de dados e um checksum, respectivamente. 
+ 
+Protocolo de Comunicação 
+Horustech 
+DT 214 
+Revisão: 09 
+08/03/2021 
+ 
+ 
+Página 4 de 41 \\192.168.0.250\Documentação SGQ\Publicações\Documento Técnico (DT)\Manuais 
+ 
+>PCCCCX.... KK 
+1. Camada de transporte 
+• Delimitador 
+• P: Tipo do comando: 
+➢ ?: Pergunta para a automação; 
+➢ !: Resposta da automação. 
+• C [4]: Tamanho do campo DATA em hexadecimal. 
+2. Camada de dados 
+• X [2...65535]: Dados do comando: 
+➢ Tipo [2]: Índice do comando; 
+➢ Parâmetros [0...65532]: Parâmetros auxiliares do comando. 
+3. Checksum: 
+• K [2]: Somatório dos valores ACSII dos caracteres do comando, sendo desprezado o byte 
+mais significativo. 
+3 Comandos 
+3.1 Abastecimento 
+3.1.1 Leitura de Abastecimento 
+Este comando é utilizado para a leitura de abastecimento finalizado. 
+• Tamanho: 02 (0x0002) 
+• Índice: 02 (0x02) 
+• Estrutura do comando: 
+>?CCCC02KK 
+➢ 02 [02]: Índice do comando.............................................................(hexadecimal) 
+• Resposta: Este comando retornará até 107 caracteres, conforme demonstração abaixo. 
+No caso de memória vazia, a resposta terá tamanho dois 
+• Tamanho: 2 (0x0002) / 107 (0x006B) 
+• Estrutura da resposta: 
+>!CCCC02NNNNNNBBCCAATTTTTTLLLLLLPPPPXYZttttddmmyyhhnneeeeeeeeeeEEEEE
+EEEEEiiiiiiiiiiiiiiiiIIIIIIIIIIIIIIIIaaaaaaaaKK 
+➢ 02 [02]: Índice do comando.............................................................(hexadecimal) 
+➢ N [06]: Índice do abastecimento na memória da automação..................(decimal) 
+➢ B [02]: Número do bico............................................................................(decimal) 
+➢ C [02]: Código do combustível..........................................................
+---CUT---
+=== Grava????o de identificador @ -1 ===
+=== ??ndice: 13 @ -1 ===
+=== >?CCCC0D @ 22914 ===
+>?CCCC0DTTTTTTTTTTTTTTTTLLKK 
+➢ 0D [02]: Índice do comando.............................................................(hexadecimal) 
+➢ T [16]: Código de identificador.........................................................(hexadecimal) 
+➢ L [02]: Controle........................................................................................(decimal) 
+o 27: Libera bomba para abastecimento; 
+o 04: Cliente, não libera bomba para abastecimento; 
+• Resposta: Este comando retornará à posição do identificador em memória ou um código 
+de erro caso não tenha sido possível realizar a gravação. 
+• Tamanho: 24 (0x0018) / 4 (0x0004) / {Erro} 
+• Estrutura da resposta: 
+>!CCCC0DNNNNNNTTTTTTTTTTTTTTTTKK  
+➢ 0D [02]: Índice do comando.............................................................(hexadecimal) 
+➢ N [06]: Posição em que o identificador foi armazenado..........................(decimal) 
+➢ T [16]: Código do identificador armazenado....................................(hexadecimal) 
+>!CCCC0DCDKK 
+➢ 0D [02]: Índice do comando.............................................................(hexadecimal) 
+➢ C [01]: Códigos de status de execução..................................................(caractere) 
+➢ D [01]: Código do erro......................................................................(hexadecimal) 
+• Exemplo: 
+TX: >?00140DB3280000000000252707 
+RX: >!00180D000001B328000000000025A5 
+3.3.3 Exclusão de identificador 
+Este comando é utilizado para apagar códigos de identificadores na memória da automação. 
+• Tamanho: 24 (0x0018) 
+ 
+Protocolo de Comunicação 
+Horustech 
+DT 214 
+Revisão: 09 
+08/03/2021 
+ 
+ 
+Página 12 de 41 \\192.168.0.250\Documentação SGQ\Publicações\Documento Técnico (DT)\Manuais 
+ 
+• Índice: 14 (0x0E) 
+• Estrutura do comando: 
+>?CCCC0ENNNNNNTTTTTTTTTTTTTTTTKK 
+➢ 0E [02]: Índice do comando.............................................................(hexadecimal) 
+➢ N [06]: Posição do identificador na memória..........................................(decimal) 
+➢ T [16]: Código de identificador a ser deletado.................................(hexadecimal) 
+• Resposta: Este comando retornará um caractere informando a situação da execução do 
+comando. 
+• Tamanho: 04 (0x0004) 
+• Estrutura da resposta: 
+>!CCCC0ECDKK 
+➢ 0E [02]: Índice do comando.....................................................................(hexadecimal) 
+➢ C [01]: Códigos de Status de execução.........................................................(caractere) 
+➢ D [01]: Código do erro.............................................................................(hexadecimal) 
+• Exemplo: 
+TX: >?00180E000001B328000000000025C4 
+RX: >!00040E00BA 
+3.3.4 Busca de identificadores 
+Este comando é utilizado para localizar códigos de identificadores na memória da 
+automação. Lembrando que a posição 000000 da memória da automação também guarda um 
+identificador, então caso queira ler a posição 0007 da memória, é necessário enviar a posição 
+0006. 
+• Tamanho: 08 (0x0008) 
+• Índice: 15 (0x0F) 
+• Estrutura do comando: 
+>?CCCC0FNNNNNNKK 
+➢ 0F [02]: Índice do comando.............................................................(hexadecimal) 
+➢ N [06]: Índice da posição.........................................................................(decimal) 
+• Resposta: Este comando retornará a linha do arquivo de identificadores solicitada com 
+as informações separadas por “;”. 
+• Tamanho: Quando encontra o sensor não retorna tamanho e sim a estrutura indicada 
+abaixo. Em caso de espaço da memória sem cartão, o tamanho será 02 (0x0002). 
+• Estrutura da resposta em casos que não há identificador no espaço de memória: 
+>!CCCC0ACDKK 
+➢ 0F [02]: Índice do comando.............................................................(hexadecimal) 
+➢ C [01]: Códigos de status de execução..................................................(caractere) 
+ 
+Protocolo de Comunicação 
+Horustech 
+DT 214 
+Revisão: 09 
+08/03/2021 
+ 
+ 
+Página 13 de 41 \\192.168.0.250\Documentação SGQ\Publicações\Documento Técnico (DT)\Manuais 
+ 
+➢ D [01]: Código do erro.....................................................................(hexadecimal) 
+• Exemplo: 
+➢ Com cartão cadastrado na automação: 
+TX: >?00080F0000029F 
+RX: 000002; B328000000000025; 27:CARD  ATTENDANT 1 L; 11; FFFF; FFFFFFFF; 
+B328000000000025; 00,00; 00000000; 
+➢ Com espaço da memória sem cartão: 
+TX: >?00080F000003A0 
+RX: >!00020F59 
+3.3.5 Leitura de registro de identificador 
+Este comando é utilizado para obter todos os dados relativos a um identificador presente na 
+memória. 
+• Tamanho: 08 (0x0008) 
+• Índice: 16 (0x10) 
+• Estrutura do comando: 
+>?CCCC10NNNNNNKK 
+➢ 10 [02]: Índice do comando.............................................................(hexadecimal) 
+➢ N [06]: Índice do registro do identificador...............................................(decimal) 
+• Resposta: Este comando retornará os dados relativos ao identificador em memória ou 
+um código de erro caso não tenha sido possível encontrar. 
+• Tamanho: 40 (0x0028) 
+• Estrutura da resposta: 
+>!CCCC10NNNNNNCCCCCCCCTTTTTTTTTTTTTTTTDDMMHHmmKK 
+➢ 10 [02]: Índice do comando.............................................................(hexadecimal) 
+➢ N [06]: Posição do identificador na memória..........................................(decimal) 
+➢ C [08]: Código dos bicos ('00' caso não haja tal bico)...............................(decimal) 
+➢ T [16]: Código do identificador........................................................(hexadecimal) 
+➢ D [02]: Dia................................................................................................(decimal) 
+➢ M [02]: Mês.............................................................................................(decimal) 
+➢ H [02]: Hora.............................................................................................(decimal) 
+➢ m [02]: Minuto........................................................................................(decimal) 
+• Exemplo: 
+TX: >?0008100000028A 
+RX: >!0028
+---CUT---

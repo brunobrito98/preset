@@ -1,0 +1,26 @@
+{
+  "name": "preset-autosystem",
+  "version": "1.0.0",
+  "bin": "start-horustech.js",
+  "scripts": {
+    "proxy": "node ws-proxy.js",
+    "start": "node start-horustech.js",
+    "build:exe": "pkg . --targets node18-win-x64 --output dist/preset-autosystem.exe",
+    "build:exe:icon": "node apply-exe-icon.js",
+    "build:installer": "npm run build:exe && ISCC preset-autosystem-installer.iss"
+  },
+  "pkg": {
+    "assets": [
+      "preset-autosystem.html"
+    ],
+    "outputPath": "dist"
+  },
+  "dependencies": {
+    "pg": "^8.16.3",
+    "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1",
+    "rcedit": "^5.0.2"
+  }
+}
