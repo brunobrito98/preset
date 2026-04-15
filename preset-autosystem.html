@@ -1797,6 +1797,21 @@
   <div class="toast-area" id="toastArea"></div>
 
   <!-- CONNECTION MODAL -->
+  <div class="modal-overlay" id="changePasswordModal">
+    <div class="modal">
+      <div class="modal-title">Alterar Senha</div>
+      <div class="modal-sub">Defina uma nova senha para o usuário <strong id="changePasswordTarget"></strong>. A alteração será registrada na auditoria.</div>
+      <div class="form-row">
+        <label class="form-label">Nova senha</label>
+        <input class="form-input" id="changePasswordInput" type="password" placeholder="Mínimo 4 caracteres" autocomplete="new-password">
+      </div>
+      <div class="modal-actions" style="margin-top:16px;">
+        <button class="btn-cancel" onclick="closeChangePasswordModal()">Cancelar</button>
+        <button class="btn-save" onclick="submitChangePassword()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="connModal">
     <div class="modal">
       <div class="modal-title">Conexão com o Concentrador</div>
@@ -2171,7 +2186,10 @@
       <td>${escHtml(user.username)}</td>
       <td><span class="user-badge ${user.isSuperuser ? 'super' : ''}">${user.isSuperuser ? 'Superusuário' : 'Operador'}</span></td>
       <td>${user.canAdjustPrices ? 'Sim' : 'Não'}</td>
-      <td>${user.username.toLowerCase() === 'autosystem' ? 'Protegido' : `<button class="btn-remove" onclick="deleteUser('${user.id}')">Remover</button>`}</td>
+      <td>
+        <button class="btn-save" style="padding:6px 10px;font-size:12px;margin-right:6px;" onclick="openChangePasswordModal('${user.id}')">Alterar senha</button>
+        ${user.username.toLowerCase() === 'autosystem' ? '' : `<button class="btn-remove" onclick="deleteUser('${user.id}')">Remover</button>`}
+      </td>
     </tr>
   `).join('');
     }
@@ -2238,7 +2256,13 @@
 
       list.innerHTML = auditEntries.slice(0, 30).map(entry => {
         const payload = entry.payload || {};
-        const levels = (payload.levels || []).map(level => `${level.label}: ${level.value}`).join(' | ');
+        let bodyHtml;
+        if (entry.actionType === 'alteracao_senha') {
+          bodyHtml = `🔑 Alterou a senha do usuário <strong>${escHtml(payload.targetUsername || '--')}</strong>`;
+        } else {
+          const levels = (payload.levels || []).map(level => `${level.label}: ${level.value}`).join(' | ');
+          bodyHtml = `Bico ${escHtml(String(payload.bico ?? '--'))} • ${escHtml(payload.fuelLabel || 'Combustível não informado')} • ${levels || 'Sem níveis'}`;
+        }
         return `
       <div class="audit-item">
         <div class="audit-top">
@@ -2246,7 +2270,7 @@
           <div class="audit-time">${new Date(entry.createdAt).toLocaleString('pt-BR')}</div>
         </div>
         <div class="audit-body">
-          Bico ${escHtml(String(payload.bico ?? '--'))} • ${escHtml(payload.fuelLabel || 'Combustível não informado')} • ${levels || 'Sem níveis'}
+          ${bodyHtml}
         </div>
       </div>
     `;
@@ -2264,6 +2288,53 @@
         await loadAuditEntries();
       } catch (e) {
         addLog('warn', `Auditoria local não gravada: ${e.message}`);
+      }
+    }
+
+    let changePasswordTargetId = null;
+
+    function openChangePasswordModal(id) {
+      if (!currentUser?.isSuperuser) {
+        showToast('err', '❌ Apenas o superusuário pode alterar senhas.');
+        return;
+      }
+      const target = (managedUsers || []).find(u => u.id === id);
+      if (!target) {
+        showToast('err', '❌ Usuário não encontrado.');
+        return;
+      }
+      changePasswordTargetId = id;
+      document.getElementById('changePasswordTarget').textContent = target.username;
+      document.getElementById('changePasswordInput').value = '';
+      document.getElementById('changePasswordModal').classList.add('open');
+      setTimeout(() => document.getElementById('changePasswordInput').focus(), 50);
+    }
+
+    function closeChangePasswordModal() {
+      document.getElementById('changePasswordModal').classList.remove('open');
+      changePasswordTargetId = null;
+    }
+
+    async function submitChangePassword() {
+      if (!changePasswordTargetId) return;
+      const password = document.getElementById('changePasswordInput').value;
+      if (!password || password.length < 4) {
+        showToast('err', '❌ A nova senha deve ter pelo menos 4 caracteres.');
+        return;
+      }
+      try {
+        const resp = await fetch(`/api/users/${encodeURIComponent(changePasswordTargetId)}/password`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ password })
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao alterar senha.');
+        showToast('ok', `✅ Senha de ${data.user.username} alterada com sucesso.`);
+        closeChangePasswordModal();
+        loadAuditEntries();
+      } catch (e) {
+        showToast('err', `❌ ${e.message}`);
       }
     }
 
