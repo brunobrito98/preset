@@ -7,7 +7,12 @@
     "start": "node start-horustech.js",
     "build:exe": "pkg . --targets node12-win-x64 --output dist/preset-autosystem.exe",
     "build:exe:icon": "node apply-exe-icon.js",
-    "build:installer": "npm run build:exe && ISCC preset-autosystem-installer.iss"
+    "build:installer": "npm run build:exe && ISCC preset-autosystem-installer.iss",
+    "build:w7": "pkg . --targets node12-win-x64 --output dist/preset-autosystem-w7.exe",
+    "build:w11": "pkg . --targets node18-win-x64 --output dist/preset-autosystem-w11.exe",
+    "installer:w7": "npm run build:w7 && ISCC preset-autosystem-installer-w7.iss",
+    "installer:w11": "npm run build:w11 && ISCC preset-autosystem-installer-w11.iss",
+    "build:all": "npm run installer:w7 && npm run installer:w11"
   },
   "pkg": {
     "assets": [
