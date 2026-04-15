@@ -1413,6 +1413,9 @@
         <div class="auth-title">Acesso Autorizado</div>
       </div>
       <div class="auth-body">
+        <div id="dbErrorBanner"
+          style="display:none;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.4);border-radius:8px;padding:12px 16px;margin-bottom:14px;color:#ff8b8b;font-size:13px;line-height:1.5;">
+        </div>
         <div class="auth-error" id="authError"></div>
         <div class="form-row">
           <label class="form-label" for="loginUser">Usuário</label>
@@ -2046,7 +2049,33 @@
       return authToken ? { Authorization: `Bearer ${authToken}` } : {};
     }
 
+    async function checkDbStatus() {
+      try {
+        const resp = await fetch('/api/db-status');
+        const data = await resp.json();
+        const banner = document.getElementById('dbErrorBanner');
+        if (!resp.ok || !data.ok) {
+          banner.innerHTML = `⚠️ <strong>Banco de dados inacessível</strong><br>${data.error || 'Verifique o servidor PostgreSQL e o arquivo server-config.json em C:\\ProgramData\\PresetAutoSystem\\.'}`;
+          banner.style.display = 'block';
+          document.getElementById('btnLogin').disabled = true;
+          return false;
+        } else {
+          banner.style.display = 'none';
+          document.getElementById('btnLogin').disabled = false;
+          return true;
+        }
+      } catch (e) {
+        const banner = document.getElementById('dbErrorBanner');
+        banner.innerHTML = `⚠️ <strong>Servidor local não respondeu</strong><br>O aplicativo pode estar iniciando. Aguarde e recarregue a página.`;
+        banner.style.display = 'block';
+        document.getElementById('btnLogin').disabled = true;
+        return false;
+      }
+    }
+
     async function validateSession() {
+      await checkDbStatus();
+
       if (!authToken) {
         currentUser = null;
         updateAuthUi();
@@ -2339,6 +2368,21 @@
 
     function parseIdentfidSearchResponse(resp, requestedPosition) {
       const s = String(resp || '').trim();
+
+      // Caso 1: posição vazia — concentrador retorna apenas o índice 0F sem dados adicionais.
+      // Formato: >!00020FKK  (CCCC=0002 = 2 chars de dados = só o índice 0F)
+      const emptyShort = s.match(/^>!0002(0F)([0-9A-F]{2})$/i);
+      if (emptyShort) {
+        const [, idx, checksum] = emptyShort;
+        const expectedChecksum = calculateChecksum('!0002' + idx);
+        if (checksum.toUpperCase() !== expectedChecksum) {
+          throw new Error(`Checksum inválido na busca de Identfid (${checksum} != ${expectedChecksum})`);
+        }
+        return { found: false, position: requestedPosition, raw: s };
+      }
+
+      // Caso 2: resposta de erro com status e código de erro.
+      // Formato: >!CCCC0F<status><errorCode>KK
       const emptyMatch = s.match(/^>!([0-9A-F]{4})0F([0-9A-F])([0-9A-F])([0-9A-F]{2})$/i);
       if (emptyMatch) {
         const [, sizeHex, status, errorCode, checksum] = emptyMatch;

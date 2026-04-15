@@ -27,15 +27,36 @@ const APP_STATE_KEY = 'default';
 
 let dbPool = null;
 let dbConfig = null;
+let dbError = null;
+
+const logFile = path.join(
+  process.env.ProgramData || 'C:\\ProgramData',
+  'PresetAutoSystem',
+  'startup.log'
+);
 
 function log(message, extra = '') {
   const timestamp = new Date().toISOString();
   const suffix = extra ? ` ${extra}` : '';
-  console.log(`[${timestamp}] ${message}${suffix}`);
+  const line = `[${timestamp}] ${message}${suffix}`;
+  console.log(line);
+  try {
+    fs.appendFileSync(logFile, line + '\n');
+  } catch (e) {
+    // ignora falha de escrita no log
+  }
 }
 
 function ensureCommonDataDir() {
   fs.mkdirSync(commonDataDir, { recursive: true });
+}
+
+function generateUUID() {
+  var b = crypto.randomBytes(16);
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  var h = b.toString('hex');
+  return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
 }
 
 function readDbConfig() {
@@ -201,33 +222,33 @@ function normalizeAppState(input) {
       postoCnpj: normalizeText(rawConfig.postoCnpj),
       levelTexts: {
         p0: {
-          tag: normalizeText(rawConfig.levelTexts?.p0?.tag) || base.config.levelTexts.p0.tag,
-          description: normalizeText(rawConfig.levelTexts?.p0?.description) || base.config.levelTexts.p0.description,
+          tag: normalizeText(rawConfig.levelTexts && rawConfig.levelTexts.p0 && rawConfig.levelTexts.p0.tag) || base.config.levelTexts.p0.tag,
+          description: normalizeText(rawConfig.levelTexts && rawConfig.levelTexts.p0 && rawConfig.levelTexts.p0.description) || base.config.levelTexts.p0.description,
         },
         p1: {
-          tag: normalizeText(rawConfig.levelTexts?.p1?.tag) || base.config.levelTexts.p1.tag,
-          description: normalizeText(rawConfig.levelTexts?.p1?.description) || base.config.levelTexts.p1.description,
+          tag: normalizeText(rawConfig.levelTexts && rawConfig.levelTexts.p1 && rawConfig.levelTexts.p1.tag) || base.config.levelTexts.p1.tag,
+          description: normalizeText(rawConfig.levelTexts && rawConfig.levelTexts.p1 && rawConfig.levelTexts.p1.description) || base.config.levelTexts.p1.description,
         },
         p2: {
-          tag: normalizeText(rawConfig.levelTexts?.p2?.tag) || base.config.levelTexts.p2.tag,
-          description: normalizeText(rawConfig.levelTexts?.p2?.description) || base.config.levelTexts.p2.description,
+          tag: normalizeText(rawConfig.levelTexts && rawConfig.levelTexts.p2 && rawConfig.levelTexts.p2.tag) || base.config.levelTexts.p2.tag,
+          description: normalizeText(rawConfig.levelTexts && rawConfig.levelTexts.p2 && rawConfig.levelTexts.p2.description) || base.config.levelTexts.p2.description,
         },
       },
     },
     bicos: rawBicos.map((item) => ({
-      num: Number.isInteger(Number(item?.num)) ? Number(item.num) : null,
-      fuel: normalizeText(item?.fuel),
-      code: normalizeText(item?.code).toUpperCase(),
-      desc: normalizeText(item?.desc),
+      num: Number.isInteger(Number(item && item.num)) ? Number(item && item.num) : null,
+      fuel: normalizeText(item && item.fuel),
+      code: normalizeText(item && item.code).toUpperCase(),
+      desc: normalizeText(item && item.desc),
     })),
     fuelPrices: {},
   };
 
   for (const [fuelKey, prices] of Object.entries(rawFuelPrices)) {
     normalized.fuelPrices[fuelKey] = {
-      p0: String(prices?.p0 || ''),
-      p1: String(prices?.p1 || ''),
-      p2: String(prices?.p2 || ''),
+      p0: String((prices && prices.p0) || ''),
+      p1: String((prices && prices.p1) || ''),
+      p2: String((prices && prices.p2) || ''),
     };
   }
 
@@ -291,7 +312,7 @@ async function initDatabase() {
     await query(
       `insert into ht_app_users (id, username, password_salt, password_hash, active, is_superuser, can_adjust_prices)
        values ($1, $2, $3, $4, true, true, true)`,
-      [crypto.randomUUID(), 'autosystem', password.salt, password.hash]
+      [generateUUID(), 'autosystem', password.salt, password.hash]
     );
   }
 }
@@ -325,7 +346,7 @@ async function createUser(session, body) {
   const username = normalizeText(body.username);
   const password = normalizeText(body.password);
   const canAdjustPrices = Boolean(body.canAdjustPrices);
-  const isSuperuser = Boolean(body.isSuperuser) && Boolean(session?.user?.isSuperuser);
+  const isSuperuser = Boolean(body.isSuperuser) && Boolean(session && session.user && session.user.isSuperuser);
   const active = body.active !== false;
 
   if (!username || !password) {
@@ -344,7 +365,7 @@ async function createUser(session, body) {
      values ($1, $2, $3, $4, $5, $6, $7)
      returning *`,
     [
-      crypto.randomUUID(),
+      generateUUID(),
       username,
       passwordData.salt,
       passwordData.hash,
@@ -371,7 +392,7 @@ async function appendAuditEntry(session, payload) {
     `insert into ht_app_audit_logs (id, user_id, username, action_type, payload)
      values ($1, $2, $3, $4, $5::jsonb)`,
     [
-      crypto.randomUUID(),
+      generateUUID(),
       session.user.id || null,
       session.user.username,
       'reajuste_preco',
@@ -469,6 +490,15 @@ async function sendProtocolCommand(body) {
 }
 
 async function handleApiRequest(req, res) {
+  if (req.method === 'GET' && req.url === '/api/db-status') {
+    if (dbError) {
+      sendJson(res, 503, { ok: false, error: `Falha ao conectar ao banco de dados: ${dbError}` });
+    } else {
+      sendJson(res, 200, { ok: true });
+    }
+    return true;
+  }
+
   if (req.method === 'POST' && req.url === '/api/login') {
     try {
       const body = await parseJsonBody(req);
@@ -486,7 +516,7 @@ async function handleApiRequest(req, res) {
         return true;
       }
 
-      const token = crypto.randomUUID();
+      const token = generateUUID();
       sessions.set(token, { user: auth.user, createdAt: Date.now() });
       sendJson(res, 200, { ok: true, token, user: auth.user });
       return true;
@@ -703,23 +733,39 @@ async function main() {
   }
 
   ensureCommonDataDir();
-  await initDatabase();
+
+  // Tenta conectar ao banco, mas não impede o servidor HTTP de subir se falhar
+  try {
+    await initDatabase();
+    dbError = null;
+  } catch (error) {
+    dbError = error.message;
+    log('AVISO: Falha ao conectar ao banco de dados', error.message);
+    log('O servidor HTTP será iniciado mesmo assim. Verifique o server-config.json e a conectividade com o banco.');
+  }
 
   try {
     await startProxy();
   } catch (error) {
-    if (error && error.code !== 'EADDRINUSE') throw error;
-    log('Proxy já estava em execução na porta padrão.');
+    if (error && error.code === 'EADDRINUSE') {
+      log('Proxy já estava em execução na porta padrão.');
+    } else {
+      log('AVISO: Falha ao iniciar proxy WebSocket', error.message);
+    }
   }
 
   try {
     await startStaticServer();
     log('Servidor da aplicação iniciado', `http://${APP_HOST}:${APP_PORT}/`);
-    log('Banco PostgreSQL configurado', `${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
+    if (dbConfig) log('Banco PostgreSQL configurado', `${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     log('Arquivo local de configuração', configFile);
   } catch (error) {
-    if (!error || error.code !== 'EADDRINUSE') throw error;
-    log('Servidor HTTP da aplicação já estava em execução.');
+    if (error && error.code === 'EADDRINUSE') {
+      log('Servidor HTTP da aplicação já estava em execução.');
+    } else {
+      log('ERRO CRÍTICO: Falha ao iniciar servidor HTTP na porta ' + APP_PORT, error.message);
+      // Não relança — anota o erro e continua para abrir o navegador com a mensagem de falha
+    }
   }
 
   const url = `http://${APP_HOST}:${APP_PORT}/`;
@@ -731,6 +777,8 @@ async function main() {
 }
 
 main().catch((error) => {
-  log('Falha ao iniciar a aplicação', error.message);
+  log('ERRO FATAL ao iniciar a aplicação', error.message);
+  try { fs.appendFileSync(logFile, `STACK: ${error.stack}\n`); } catch (e) { }
   process.exitCode = 1;
 });
+

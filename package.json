@@ -5,7 +5,7 @@
   "scripts": {
     "proxy": "node ws-proxy.js",
     "start": "node start-horustech.js",
-    "build:exe": "pkg . --targets node18-win-x64 --output dist/preset-autosystem.exe",
+    "build:exe": "pkg . --targets node12-win-x64 --output dist/preset-autosystem.exe",
     "build:exe:icon": "node apply-exe-icon.js",
     "build:installer": "npm run build:exe && ISCC preset-autosystem-installer.iss"
   },
@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "pg": "^8.16.3",
-    "ws": "^8.20.0"
+    "ws": "^7.5.10"
   },
   "devDependencies": {
     "pkg": "^5.8.1",
