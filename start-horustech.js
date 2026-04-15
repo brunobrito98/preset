@@ -387,6 +387,36 @@ async function deleteUser(id) {
   await query(`delete from ht_app_users where id = $1`, [id]);
 }
 
+async function changeUserPassword(session, id, newPassword) {
+  const password = normalizeText(newPassword);
+  if (!password || password.length < 4) {
+    throw new Error('Informe uma nova senha com pelo menos 4 caracteres.');
+  }
+  const current = await query(`select id, username from ht_app_users where id = $1 limit 1`, [id]);
+  if (current.rowCount === 0) throw new Error('Usuário não encontrado.');
+  const target = current.rows[0];
+  const passwordData = hashPassword(password);
+  await query(
+    `update ht_app_users set password_salt = $1, password_hash = $2 where id = $3`,
+    [passwordData.salt, passwordData.hash, id]
+  );
+  await query(
+    `insert into ht_app_audit_logs (id, user_id, username, action_type, payload)
+     values ($1, $2, $3, $4, $5::jsonb)`,
+    [
+      crypto.randomUUID(),
+      session.user.id || null,
+      session.user.username,
+      'alteracao_senha',
+      JSON.stringify({
+        targetUserId: target.id,
+        targetUsername: target.username,
+      }),
+    ]
+  );
+  return { id: target.id, username: target.username };
+}
+
 async function appendAuditEntry(session, payload) {
   await query(
     `insert into ht_app_audit_logs (id, user_id, username, action_type, payload)
@@ -591,6 +621,21 @@ async function handleApiRequest(req, res) {
       const body = await parseJsonBody(req);
       const user = await createUser(session, body);
       sendJson(res, 200, { ok: true, user });
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: error.message });
+    }
+    return true;
+  }
+
+  if (req.method === 'PUT' && req.url.startsWith('/api/users/') && req.url.endsWith('/password')) {
+    const session = requireSuperuser(req, res);
+    if (!session) return true;
+    try {
+      const parts = req.url.split('/');
+      const id = decodeURIComponent(parts[3] || '');
+      const body = await parseJsonBody(req);
+      const target = await changeUserPassword(session, id, body.password);
+      sendJson(res, 200, { ok: true, user: target });
     } catch (error) {
       sendJson(res, 400, { ok: false, error: error.message });
     }
